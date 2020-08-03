@@ -148,7 +148,7 @@ class DenseNet3(nn.Module):
             out = self.block3(out)
             out = self.relu(self.bn1(out))
         return out
-    
+
     # function to extact the penultimate features
     def penultimate_forward(self, x):
         out = self.conv1(x)
