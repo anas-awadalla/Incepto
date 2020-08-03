@@ -1,8 +1,8 @@
 # Incepto: Automating Adversarial ML
 
-![Alt text](logo.png?raw=true )
+![Test Image 1](logo.png)
 
-What Can I Do?
+What Can You Do?
 
 📤  Train an OOD Detector
 
