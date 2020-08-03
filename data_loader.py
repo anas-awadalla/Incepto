@@ -18,7 +18,7 @@ from parkinsons_dataset import parkinsonsData
 def get_mPower(batch_size, TF, data_root='../Evaluating Models/Data/mPower/', train=True, val=True,col=14, **kwargs):
     ds = []
     files = os.listdir("../../../data3/mPower/data")
-    train, test = train_test_split(files, test_size=0.9)
+    train, test = train_test_split(files, test_size=0.8)
     if train:
         training_set = parkinsonsData(train, col=col)
         train_loader = torch.utils.data.DataLoader(training_set, batch_size=batch_size, shuffle=True, **kwargs)

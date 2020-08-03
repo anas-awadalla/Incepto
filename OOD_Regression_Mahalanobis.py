@@ -10,12 +10,16 @@ import argparse
 
 from sklearn.linear_model import LogisticRegressionCV
 
-parser = argparse.ArgumentParser(description='PyTorch code: Mahalanobis detector')
-parser.add_argument('--net_type', required=True, help='resnet | densenet | parkinsonsNet')
-args = parser.parse_args()
-print(args)
+# parser = argparse.ArgumentParser(description='PyTorch code: Mahalanobis detector')
+# parser.add_argument('--net_type', required=True, help='resnet | densenet | parkinsonsNet')
+# args = parser.parse_args()
+# print(args)
 
-def main():
+def train_detector():
+    net_type = "model"
+    dataset_list = []
+    out_list = []
+    
     # initial setup
     dataset_list = ['cifar10', 'cifar100', 'svhn']
 
