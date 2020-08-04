@@ -22,7 +22,7 @@ from torch.utils.data.sampler import SubsetRandomSampler
 def extract_features(pre_trained_net, in_distribution, in_dist_name, out_dist_list, out_of_distribution, in_transform, gpu, batch_size, num_classes):
     # set the path to pre-trained model and output
     outf = "/output/"
-    outf = outf + "model" + '_' + "dataset" + '/'
+    outf = outf + "model" + '_' + in_dist_name + '/'
     if os.path.isdir(outf) == False:
         os.mkdir(outf)
     
@@ -114,6 +114,6 @@ def extract_features(pre_trained_net, in_distribution, in_dist_name, out_dist_li
             Mahalanobis_in = np.asarray(Mahalanobis_in, dtype=np.float32)
             Mahalanobis_out = np.asarray(Mahalanobis_out, dtype=np.float32)
             Mahalanobis_data, Mahalanobis_labels = lib_generation.merge_and_generate_labels(Mahalanobis_out, Mahalanobis_in)
-            file_name = os.path.join(outf, 'Mahalanobis_%s_%s_%s.npy' % (str(magnitude), "dataset", out_dist))
+            file_name = os.path.join(outf, 'Mahalanobis_%s_%s_%s.npy' % (str(magnitude), in_dist_name, out_dist))
             Mahalanobis_data = np.concatenate((Mahalanobis_data, Mahalanobis_labels), axis=1)
             np.save(file_name, Mahalanobis_data)
