@@ -1,4 +1,4 @@
-# Incepto: Automating Adversarial ML
+# Incepto: Adversarial ML Framework for Medical Models
 
 ![Test Image 1](logo.png)
 
