@@ -17,7 +17,6 @@ What Can You Do?
 
 # How to Setup Your Model:
 
-"""
     class Network(nn.Module):
         def __init__(self):
             super().__init__()
@@ -159,4 +158,4 @@ What Can You Do?
             y = self.fc(out)
 
             return y, penultimate
-"""
+
