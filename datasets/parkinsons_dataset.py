@@ -16,7 +16,7 @@ def correct_batch(batch):
 class parkinsonsData(Dataset):
     
     def __init__(self, df, col):
-        file_df = pd.read_csv("../../../data3/mPower/52461358.csv")
+        file_df = pd.read_csv("../../../data3/mPower/52461358.csv")[:100]
         # if col==14:
         #   files = file_df["deviceMotion_walking_rest.json.items"].tolist()
         # elif col==8:

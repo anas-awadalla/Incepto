@@ -8,12 +8,11 @@ import torch
 import data_loader
 import numpy as np
 import calculate_log as callog
-import models
-from densenet121 import DenseNet121
-import parkinsonsNet
+# import models
+from models.densenet121 import DenseNet121
 import os
 import lib_generation
-from parkinsonsNet import Network
+from models.parkinsonsNet import Network
 
 from torchvision import transforms
 from torch.autograd import Variable

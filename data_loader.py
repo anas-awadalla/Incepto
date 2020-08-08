@@ -8,11 +8,11 @@ import torch
 from sklearn.model_selection import train_test_split
 from torch.utils.data import DataLoader
 from torchvision import datasets, transforms
-from mHealthData import mHealthData
-from MotionSenseData import MotionSenseData
-from oodParkinsonsData import oodParkinsonsData
-from skindataset import SkinDataset
-from parkinsons_dataset import parkinsonsData
+from datasets.mHealthData import mHealthData
+from datasets.MotionSenseData import MotionSenseData
+from datasets.oodParkinsonsData import oodParkinsonsData
+from datasets.skindataset import SkinDataset
+from datasets.parkinsons_dataset import parkinsonsData
 
 
 def get_mPower(batch_size, TF, data_root='../Evaluating Models/Data/mPower/', train=True, val=True,col=14, **kwargs):
