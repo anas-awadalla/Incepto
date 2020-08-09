@@ -14,12 +14,7 @@ What Can You Do?
 
 🕶 Defend Your Model Against Attacks
 
-🤓  Visualize whole datasets, datapoints, and feature maps in a dashboard
-
-# How to Work With Incepto:
-
-### Set up a client object
-    new_client = client(model,in_dist_dataset,ood_dataset,data_labels=["MotionSense","mHealth"],num_classes=2)
+🤓  Visualize/Compare Whole Datasets or Datapoints
 
 # How to Setup Your Model:
 
