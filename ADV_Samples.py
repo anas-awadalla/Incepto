@@ -30,7 +30,7 @@ from torch.utils.data.sampler import SubsetRandomSampler
 # args = parser.parse_args()
 # print(args)
 
-def generate_adv_samples(model, net_type, dataset_name, dataset, gpu, adv_type, num_classes, in_transform=None, batch_size=200):
+def generate_adv_samples(model, net_type, dataset_name, dataset, gpu, adv_type, num_classes, random_noise, min_pixel, max_pixel, in_transform=None, batch_size=200, verbose=0):
     outf = './adv_output/'
     # set the path to pre-trained model and output
     pre_trained_net = model
@@ -157,9 +157,9 @@ def generate_adv_samples(model, net_type, dataset_name, dataset, gpu, adv_type, 
         elif adv_type == 'CWL2':
             random_noise_size = 0.05 / 1 
     else:
-        random_noise_size = 0.25 / 4
-        min_pixel = 10
-        max_pixel = 10
+        random_noise_size = random_noise
+        min_pixel = min_pixel
+        max_pixel = max_pixel
         
             
     model.cuda()
@@ -292,6 +292,7 @@ def generate_adv_samples(model, net_type, dataset_name, dataset, gpu, adv_type, 
         if total == 0:
             flag = 1
             adv_data_tot = adv_data.clone().cpu()
+            viz_data = adv_data_tot
         else:
             adv_data_tot = torch.cat((adv_data_tot, adv_data.clone().cpu()),0)
 
@@ -326,11 +327,13 @@ def generate_adv_samples(model, net_type, dataset_name, dataset, gpu, adv_type, 
     torch.save(adv_data_tot, '%s/adv_data_%s_%s_%s.pth' % (outf, net_type, dataset, adv_type))
     torch.save(noisy_data_tot, '%s/noisy_data_%s_%s_%s.pth' % (outf, net_type, dataset, adv_type))
     torch.save(label_tot, '%s/label_%s_%s_%s.pth' % (outf, net_type, dataset, adv_type))
-
-    print('Adversarial Noise:({:.2f})\n'.format(generated_noise / total))
-    print('Final Accuracy: {}/{} ({:.2f}%)\n'.format(correct, total, 100. * correct / total))
-    print('Adversarial Accuracy: {}/{} ({:.2f}%)\n'.format(adv_correct, total, 100. * adv_correct / total))
-    print('Noisy Accuracy: {}/{} ({:.2f}%)\n'.format(noise_correct, total, 100. * noise_correct / total))
+    if verbose == 0:
+        print('Adversarial Noise:({:.2f})\n'.format(generated_noise / total))
+        print('Final Accuracy: {}/{} ({:.2f}%)\n'.format(correct, total, 100. * correct / total))
+        print('Adversarial Accuracy: {}/{} ({:.2f}%)\n'.format(adv_correct, total, 100. * adv_correct / total))
+        print('Noisy Accuracy: {}/{} ({:.2f}%)\n'.format(noise_correct, total, 100. * noise_correct / total))
+    else:
+        #build UI Dashboard
     
 # if __name__ == '__main__':
 #     main()
