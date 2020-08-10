@@ -8,13 +8,7 @@ What Can You Do?
 
 📤  Train an OOD Detector
 
-🔫  Attack Your Model
-
-🏋 Run Adversarial Training
-
-🕶 Defend Your Model Against Attacks
-
-🤓  Visualize/Compare Whole Datasets or Datapoints
+📊  Visualize/Compare Whole Datasets or Datapoints and Feature maps!
 
 # How to Setup Your Model:
 
