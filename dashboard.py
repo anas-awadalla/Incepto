@@ -20,6 +20,7 @@ class DashboardDataElements(param.Parameterized):
         def filter_map(self, model):
             return visualize_maps_filters(model)
         def feature_map(self, model, img, filter):
+            return visualize_maps_features(model, img)
         
         def pixel_dist_img(self, image):
             print("Generating Pixel Distribution Histogram...")

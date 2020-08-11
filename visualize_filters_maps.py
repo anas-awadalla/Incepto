@@ -4,13 +4,13 @@ import torchvision.transforms as t
 from extractor import Extractor
 
 
-def visualize_maps_features(model, image_path):
+def visualize_maps_features(model, img):
     fig = plt.figure()
 
     extractor = Extractor(model)
     extractor.activate()
 
-    img = cv.cvtColor(cv.imread(image_path), cv.COLOR_BGR2RGB)
+    img = cv.cvtColor(img, cv.COLOR_BGR2RGB)
     img = t.Compose([
         t.ToPILImage(),
         t.Resize((128, 128)),
