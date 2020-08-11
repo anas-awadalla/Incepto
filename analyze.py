@@ -35,7 +35,7 @@ out_distribution: as a single or list of torch datasets
 image: is the data image data
 """
 
-def analyze(in_distribution, out_of_distribution, channel_labels, is_image=False, signal_frequency=None, data_labels=None):
+def analyze(model, in_distribution, out_of_distribution, channel_labels, is_image=False, signal_frequency=None, data_labels=None):
             
     # Check Dimensions
     if not isinstance(out_of_distribution, Iterable):
@@ -79,6 +79,8 @@ def analyze(in_distribution, out_of_distribution, channel_labels, is_image=False
             tabs.append((label,pn.Column(dde.pixel_dist_img(i),
                                          dde.color_dist_img(i), )))
                                          #dde.multi_dem_color_hist(i))))
+                                         
+        tabs.append(("Filters",pn.Column(dde.filter_map(model))))
                 
         dashboard = pn.Column(dashboard_title,dashboard_desc, dde.param,  pn.Tabs(*tabs))
         print("Conducting the following comparisions for image data: Color distribution, Pixel distribution, and Variance of laplacian operators")
@@ -101,7 +103,7 @@ def analyze(in_distribution, out_of_distribution, channel_labels, is_image=False
                                          dde.plt_power_spec(i,signal_frequency,channel_labels), 
                                          dde.mean_plot(i,channel_labels), dde.min_plot(i,channel_labels), 
                                          dde.max_plot(i,channel_labels), dde.stdev_plot(i,channel_labels) )))
-                
+            tabs.append(("Filters",pn.Column(dde.filter_map(model))))
         dashboard = pn.Column(dashboard_title,dashboard_desc, dde.param,  pn.Tabs(*tabs))
 
     

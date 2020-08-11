@@ -336,7 +336,6 @@ def generate_adv_samples(model, net_type, dataset_name, dataset, gpu, adv_type, 
         print('Adversarial Accuracy: {}/{} ({:.2f}%)\n'.format(adv_correct, total, 100. * adv_correct / total))
         print('Noisy Accuracy: {}/{} ({:.2f}%)\n'.format(noise_correct, total, 100. * noise_correct / total))
     else:
+        print("None")
         #build UI Dashboard
-    
-# if __name__ == '__main__':
-#     main()
+

@@ -6,7 +6,8 @@ from extractor import Extractor
 
 def visualize_maps_features(model, img):
     fig = plt.figure()
-
+    fig.tight_layout(pad=3.0)
+    
     extractor = Extractor(model)
     extractor.activate()
 
@@ -36,13 +37,14 @@ def visualize_maps_features(model, img):
 
 def visualize_maps_filters(model):
     fig = plt.figure()
+
     extractor = Extractor(model)
     extractor.activate()
 
-    plt.figure(figsize=(35, 35))
+    plt.figure(figsize=(150, 150))
     for index, filter in enumerate(extractor.CNN_weights[0]):
-        plt.subplot(8, 8, index + 1)
-        plt.imshow(filter[0, :, :].detach())
-        plt.axis('off')
-        plt.title("filter: "+str(index))
+        ax = fig.add_subplot(64, 64, index + 1)
+        ax.imshow(filter[0, :, :].detach())
+        ax.axis('off')
+        ax.set_title("filter: "+str(index))
     return fig
