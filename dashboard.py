@@ -11,9 +11,16 @@ import pandas as pd
 import numpy as np
 import seaborn as sns
 import panel as pn
+from visualize_filters_maps import visualize_maps_features
+from visualize_filters_maps import visualize_maps_filters
 
 
 class DashboardDataElements(param.Parameterized):
+    
+        def filter_map(self, model):
+            return visualize_maps_filters(model)
+        def feature_map(self, model, img, filter):
+        
         def pixel_dist_img(self, image):
             print("Generating Pixel Distribution Histogram...")
             fig = plt.figure()
