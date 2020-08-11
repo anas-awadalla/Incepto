@@ -292,7 +292,10 @@ def generate_adv_samples(model, net_type, dataset_name, dataset, gpu, adv_type, 
         if total == 0:
             flag = 1
             adv_data_tot = adv_data.clone().cpu()
-            viz_data = adv_data_tot
+            # for dashboard generation
+            viz_adv_data = adv_data_tot
+            viz_data = data
+            viz_target = target
         else:
             adv_data_tot = torch.cat((adv_data_tot, adv_data.clone().cpu()),0)
 

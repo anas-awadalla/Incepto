@@ -31,19 +31,15 @@ class client():
     def attack(self, adv_type, gpu, batch_size=200, in_transform=None):
         generate_adv_samples(model=self.model,net_type="model",dataset_name="mPower",dataset = self.in_distribution,gpu=gpu,adv_type=adv_type,num_classes=self.num_classes,batch_size=batch_size,in_transform=in_transform)
         
-    def feature_analyze(self,channel_labels):
-        analyze(self.in_distribution,self.out_of_distribution,channel_labels,is_image=False,data_labels=self.data_labels,signal_frequency=signal_frequency)
-        # Change to extract features and run dashboard
         
-        
-    # def adv_training(self):
+#     # def adv_training(self):
     
-    # def adv_defense(self):
+#     # def adv_defense(self):
     
-# files = os.listdir("../../../data3/mPower/data")
-# dataset = parkinsonsData(files, col=8)
-transform = transforms.Compose([transforms.ToTensor()])
-dataset = torchvision.datasets.CIFAR10(".",download=True,transform=transform)
-model = torchvision.models.densenet121(pretrained=True)
-x = client(model,dataset,dataset,data_labels=["mPower","mPower"],num_classes=1)
-x.attack("FGSM",gpu=0)
+# # files = os.listdir("../../../data3/mPower/data")
+# # dataset = parkinsonsData(files, col=8)
+# transform = transforms.Compose([transforms.ToTensor()])
+# dataset = torchvision.datasets.CIFAR10(".",download=True,transform=transform)
+# model = torchvision.models.densenet121(pretrained=True)
+# x = client(model,dataset,dataset,data_labels=["mPower","mPower"],num_classes=1)
+# x.attack("FGSM",gpu=0)
