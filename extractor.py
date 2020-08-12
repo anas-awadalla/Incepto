@@ -56,6 +56,9 @@ class Extractor:
 
             if type(layers[x]) == nn.Conv2d:
                 self.__Append(layers[x])
+                
+            if type(layers[x]) == nn.Conv1d:
+                self.__Append(layers[x])
 
             if type(layers[x]) == nn.Linear:
                 self.__Append(layers[x], True)

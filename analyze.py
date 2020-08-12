@@ -67,8 +67,12 @@ def analyze(model, in_distribution, out_of_distribution, channel_labels, is_imag
     
     if is_image:
         data = [((next(iter(in_distrbution_sample))[0]))]
+        feature_data=[]
+        feature_data.append(data[0][0])
         for i in samples:
-            data.append(((next(iter(i))[0])))
+            val = ((next(iter(i))[0]))
+            data.append(val)
+            feature_data.append(val[0])
             
         print("Generating Graph Layout...")
 
@@ -81,6 +85,13 @@ def analyze(model, in_distribution, out_of_distribution, channel_labels, is_imag
                                          #dde.multi_dem_color_hist(i))))
                                          
         tabs.append(("Filters",pn.Column(dde.filter_map(model))))
+        # def b(event):
+        #     text.value = 'Clicked {0} times'.format(button.clicks)
+        for i, label in zip(feature_data, data_labels):
+            transform = transforms.Compose([transforms.ToPILImage()])
+            button = pn.widgets.Button(name='Click me', button_type='primary')
+            tabs.append((label+" Feature Map",pn.Column(dde.feature_map(model,np.array(transform(i)),0),button)))
+            
                 
         dashboard = pn.Column(dashboard_title,dashboard_desc, dde.param,  pn.Tabs(*tabs))
         print("Conducting the following comparisions for image data: Color distribution, Pixel distribution, and Variance of laplacian operators")
@@ -96,14 +107,17 @@ def analyze(model, in_distribution, out_of_distribution, channel_labels, is_imag
         print("Generating Graph Layout...")
 
         tabs = []
+        tabs.append(("Filters",pn.Column(dde.filter_map(model))))
+
         for i, label in zip(data, data_labels):
-            i = sum(i)/len(i)
+            # i = sum(i)/len(i)
+            print(i.type(torch.DoubleTensor))
+            tabs.append(("Features of "+label,pn.Column(dde.feature_map(model.double().cpu(),i[0].unsqueeze(0).cpu().type(torch.DoubleTensor)))))
             i = i.cpu().detach().numpy()
             tabs.append((label,pn.Column(dde.plt_energy_spec(i,signal_frequency,channel_labels), 
                                          dde.plt_power_spec(i,signal_frequency,channel_labels), 
                                          dde.mean_plot(i,channel_labels), dde.min_plot(i,channel_labels), 
                                          dde.max_plot(i,channel_labels), dde.stdev_plot(i,channel_labels) )))
-            tabs.append(("Filters",pn.Column(dde.filter_map(model))))
         dashboard = pn.Column(dashboard_title,dashboard_desc, dde.param,  pn.Tabs(*tabs))
 
     

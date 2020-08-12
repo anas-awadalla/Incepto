@@ -23,7 +23,7 @@ class client():
         if self.is_image:
             analyze(model=self.model, in_distribution=self.in_distribution,out_of_distribution=self.out_of_distribution,channel_labels=channel_labels,is_image=True,data_labels=["mPower","mPower"])
         else:
-            analyze(self.in_distribution,self.out_of_distribution,channel_labels,is_image=False,data_labels=self.data_labels,signal_frequency=signal_frequency)
+            analyze(model=self.model, in_distribution=self.in_distribution,out_of_distribution=self.out_of_distribution,channel_labels=channel_labels,signal_frequency=200,data_labels=["mPower","mPower"])
         
     def detect_ood(self, gpu, batch_size):
         extract_features(self.model, self.in_distribution, self.data_labels[0], self.data_labels[1:], self.out_of_distribution, self.in_transform, gpu=gpu, batch_size=batch_size, num_classes=self.num_classes)
@@ -37,10 +37,11 @@ class client():
     
 #     # def adv_defense(self):
     
-# # files = os.listdir("../../../data3/mPower/data")
-# # dataset = parkinsonsData(files, col=8)
-transform = transforms.Compose([transforms.ToTensor()])
-dataset = torchvision.datasets.CIFAR10(".",download=True,transform=transform)
-model = torchvision.models.densenet121(pretrained=True)
-x = client(model,dataset,dataset,data_labels=["mPower","mPower"],num_classes=10,is_image=True)
+files = os.listdir("../../../data3/mPower/data")
+dataset = parkinsonsData(files, col=8)
+# transform = transforms.Compose([transforms.ToTensor()])
+# dataset = torchvision.datasets.CIFAR10(".",download=True,transform=transform)
+# model = torchvision.models.densenet121(pretrained=True)
+model = torch.load("/home/anasa2/Incepto/pre_trained/parkinsonsNet-outbound_mpower-outbound.pth")
+x = client(model,dataset,dataset,data_labels=["mPower","mPower"],num_classes=1,is_image=False)
 x.analyze_data(channel_labels=["r","g","b"])

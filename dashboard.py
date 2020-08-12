@@ -19,7 +19,7 @@ class DashboardDataElements(param.Parameterized):
     
         def filter_map(self, model):
             return visualize_maps_filters(list(model.children()))
-        def feature_map(self, model, img, filter):
+        def feature_map(self, model, img):
             return visualize_maps_features(list(model.children()), img)
         
         def pixel_dist_img(self, image):
