@@ -4,7 +4,7 @@ setup(
     name='Incepto',
     version='0.0.1',
     description='OOD Detection and Visualization for Medical Models',
-    url='git@github.com:rfschubert/ptolemaios-sdk-package.git',
+    url='git@github.com:anas-awadalla/Incepto.git',
     author='Anas Awadalla',
     author_email='anasa2@uw.edu',
     license='unlicense',
