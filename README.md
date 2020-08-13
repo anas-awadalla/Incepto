@@ -10,6 +10,19 @@ What Can You Do?
 
 📊  Visualize/Compare Whole Datasets or Datapoints and Feature maps!
 
+# How to use Incepto?:
+```python
+#To Set Up:
+new_client = client(model,dataset,ham,data_labels=["Cifar10","HAM10000"],num_classes=10,is_image=True)
+#To Analyze Data: 
+new_client.analyze_data(channel_labels=["r","g","b"])
+#To Run OOD Detection:
+new_client.detect_ood(gpu=1,batch_size=64)
+#To Attack Model:
+new_client.attack("fsgm",gpu=1,batch_size=64)
+```
+
+
 # How to Setup Your Model:
 
 ### Add a feature_list, intermediate_forward, and penultimate_forward function to help our framework extract information from your model. Check out the model class below for an example!
