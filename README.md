@@ -26,7 +26,7 @@ new_client.attack("fsgm",gpu=1,batch_size=64)
 # How to Setup Your Model:
 
 Add a feature_list, intermediate_forward, and penultimate_forward function to help our framework extract information from your model. Check out the model class below for an example!
-
+```python
     class Network(nn.Module):
         def __init__(self):
             super().__init__()
@@ -168,3 +168,4 @@ Add a feature_list, intermediate_forward, and penultimate_forward function to he
             y = self.fc(out)
 
             return y, penultimate
+```
