@@ -65,7 +65,6 @@ class GuidedBackprop():
             # x is not used after this point because it is only needed to trigger
             # the forward hook function
             x = layer(x)
-            print(x)
             # Only need to forward until the selected layer is reached
             if index == cnn_layer:
                 # (forward hook function triggered)
@@ -79,7 +78,7 @@ class GuidedBackprop():
         return gradients_as_arr
     
     
-def generate_gb(model, cnn_layer, filter_pos, img, class_target):
+def generate_gb(model, img, class_target, cnn_layer, filter_pos,):
 
     # im = Image.open("/content/chair.png")  
     # prep_img = transforms.Compose([transforms.ToTensor()])(im).unsqueeze(0)
@@ -87,7 +86,7 @@ def generate_gb(model, cnn_layer, filter_pos, img, class_target):
         # Guided backprop
     GBP = GuidedBackprop(model)
     # Get gradients
-    guided_grads = GBP.generate_gradients(prep_img, 2, 2, 2)
+    guided_grads = GBP.generate_gradients(prep_img, class_target, cnn_layer, filter_pos)
     guided_grads_img = get_img_from_grad(guided_grads)
     # Convert to grayscale
     grayscale_guided_grads = get_img_from_grad(convert_to_grayscale(guided_grads))

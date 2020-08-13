@@ -24,8 +24,7 @@ class CamExtractor():
         conv_output = None
         for module_pos, module in self.model.features._modules.items():
             x = module(x)  # Forward
-            
-            if module_pos == "conv"+str(self.target_layer):
+            if module == self.target_layer:
                 x.register_hook(self.save_gradient)
                 conv_output = x  # Save the convolution output on that layer
         return conv_output, x
@@ -88,8 +87,9 @@ class GradCam():
     
 def get_cam(model, img, target_class, target_layer):
     x = GradCam(model,target_layer)
-    cam = x.generate_cam(img)
-    heatmap, heatmap_on_image = apply_colormap_on_image(transforms.ToPILImage(img), cam, 'hsv')
+    cam = x.generate_cam(img,target_class)
+    transform = transforms.Compose([transforms.ToPILImage()])
+    heatmap, heatmap_on_image = apply_colormap_on_image(transform(img.squeeze()), cam, 'hsv')
     cam = get_img(cam)
     heatmap = get_img(heatmap)
     heatmap_on_image = get_img(heatmap_on_image)

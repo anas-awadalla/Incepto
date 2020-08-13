@@ -11,17 +11,19 @@ import pandas as pd
 import numpy as np
 import seaborn as sns
 import panel as pn
-from visualize_filters_maps import visualize_maps_features
-from visualize_filters_maps import visualize_maps_filters
+from visualize_filters_maps import visualize_maps_features_2d, visualize_maps_features_1d
+from visualize_filters_maps import visualize_maps_filters_2d, visualize_maps_filters_1d
 from class_activation_mapping import get_cam
 from guided_backprop import generate_gb
+from torchvision import transforms
 
 class DashboardDataElements(param.Parameterized):
     
         def filter_map(self, model):
-            return visualize_maps_filters(list(model.children()))
+            return visualize_maps_filters_2d(list(model.children()))
+        
         def feature_map(self, model, img):
-            return visualize_maps_features(list(model.children()), img)
+            return visualize_maps_features_2d(list(model.children()), img)
         
         def pixel_dist_img(self, image):
             print("Generating Pixel Distribution Histogram...")
@@ -175,43 +177,64 @@ class DashboardDataElements(param.Parameterized):
             df = pd.DataFrame({"Channels":channel_labels,"Standard Deviation":stdev})
             return df
 
-        def gb_plot(self, image, model):
-            guided_grads_img,grayscale_guided_grads,pos_sal,neg_sal = generate_gb(model,1,1,image,0)
-        
-            fig = plt.figure()
-
-            ax = fig.add_subplot(131)
-            ax.imshow(np.asarray(guided_grads_img))
-            ax.set_title("Guided Gradiant")
-                
-            ax = fig.add_subplot(131)
-            ax.imshow(np.asarray(grayscale_guided_grads))
-            ax.set_title("Gradient Activation")
-                
-            ax = fig.add_subplot(131)
-            ax.imshow(np.asarray(pos_sal))
-            ax.set_title("Postive Salency")
+        def gb_plot(self, image, model, cnn_layer, filter_pos):
+            fig = plt.figure(figsize=(40,40))
+            index=1
+            for num, module_pos in zip(enumerate(model.features),model.features._modules.items()):
+                num = num[0]
+                module_pos = module_pos[0]
+                guided_grads_img,grayscale_guided_grads,pos_sal,neg_sal = generate_gb(model,image,0,num,filter_pos)
             
-            ax = fig.add_subplot(131)
-            ax.imshow(np.asarray(neg_sal))
-            ax.set_title("Negative Salency")
+                ax = fig.add_subplot(8,8,index)
+                ax.imshow(np.asarray(guided_grads_img))
+                ax.set_title("Guided Gradiant - "+str(module_pos))
+                index +=1
+                    
+                ax = fig.add_subplot(8,8,index)
+                ax.imshow(np.asarray(grayscale_guided_grads))
+                ax.set_title("Gradient Activation - "+str(module_pos))
+                index +=1
+                    
+                ax = fig.add_subplot(8,8,index)
+                ax.imshow(np.asarray(pos_sal))
+                ax.set_title("Postive Salency - "+str(module_pos))
+                index +=1
+                
+                ax = fig.add_subplot(8,8,index)
+                ax.imshow(np.asarray(neg_sal))
+                ax.set_title("Negative Salency - "+str(module_pos))
+                index +=1
+
+                return fig
+        
+        def cam_plot(self, image, model, target_class=0):
+            fig = plt.figure(figsize=(40,40))
+            index=1
+            for module_pos, module in model.features._modules.items():
+
+                cam, heatmap, heatmap_on_image = get_cam(model,image,target_class,module)
+
+                ax = fig.add_subplot(8,8,index)
+                ax.imshow(np.asarray(heatmap))
+                ax.set_title("Heat Map - "+str(module_pos))
+
+                index +=1
+                ax = fig.add_subplot(8,8,index)
+                ax.imshow(np.asarray(cam))
+                ax.set_title("Class Activation Map - "+str(module_pos))
+                index +=1
+                ax = fig.add_subplot(8,8,index)
+                ax.imshow(np.asarray(heatmap_on_image))
+                ax.set_title("Heat Map on Image - "+str(module_pos))
+                index +=1
 
             return fig
         
-        def cam_plot(self, image, model):
-            cam, heatmap, heatmap_on_image = get_cam(model,image,1,2)
+        def plot_image(self, img, target):
             fig = plt.figure()
-
             ax = fig.add_subplot(131)
-            ax.imshow(np.asarray(heatmap))
-            ax.set_title("Heat Map")
-                
-            ax = fig.add_subplot(131)
-            ax.imshow(np.asarray(cam))
-            ax.set_title("Class Activation Map")
-                
-            ax = fig.add_subplot(131)
-            ax.imshow(np.asarray(heatmap_on_image))
-            ax.set_title("Heat Map on Image")
+            transform = transforms.Compose([transforms.ToPILImage()])
+            ax.imshow(np.asarray(transform(img.squeeze())))
+            ax.set_title("Target: "+str(target))
 
             return fig

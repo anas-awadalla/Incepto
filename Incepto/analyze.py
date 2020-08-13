@@ -75,17 +75,19 @@ def analyze(model, in_distribution, out_of_distribution, channel_labels, is_imag
             feature_data.append(val[0])
             
         print("Generating Graph Layout...")
-
         tabs = []
+        tabs.append(("Filters ",pn.Column(dde.filter_map(model))))
         for i, label in zip(data, data_labels):
+            ten = i[0].unsqueeze(0)
             i = sum(i)/len(i)
-            ten = i.unsqueeze(0)
             i = i.permute(1,2,0).cpu().detach().numpy()
             tabs.append((label,pn.Column(dde.pixel_dist_img(i),
                                          dde.color_dist_img(i), )))
                                          #dde.multi_dem_color_hist(i))))
-                                  
-            tabs.append(("Features of "+label,pn.Column(dde.cam_plot(ten,model))))
+            transform = transforms.Compose([transforms.ToPILImage()])               
+            tabs.append(("Feature Map of "+label,pn.Column(dde.feature_map(model,transform(np.uint8(i))))))
+            tabs.append(("Class Activation Map of "+label,pn.Column(dde.cam_plot(ten,model))))
+            tabs.append(("Guided Backpropogation of "+label,pn.Column(dde.gb_plot(ten,model,1,2))))
        
         # tabs.append(("Filters",pn.Column(dde.filter_map(model))))
         # # def b(event):
