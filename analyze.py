@@ -107,12 +107,12 @@ def analyze(model, in_distribution, out_of_distribution, channel_labels, is_imag
         print("Generating Graph Layout...")
 
         tabs = []
-        tabs.append(("Filters",pn.Column(dde.filter_map(model))))
+        # tabs.append(("Filters",pn.Column(dde.filter_map(model))))
 
         for i, label in zip(data, data_labels):
             # i = sum(i)/len(i)
-            print(i.type(torch.DoubleTensor))
-            tabs.append(("Features of "+label,pn.Column(dde.feature_map(model.double().cpu(),i[0].unsqueeze(0).cpu().type(torch.DoubleTensor)))))
+            tabs.append(("Features of "+label,pn.Column(dde.)))
+            # tabs.append(("Features of "+label,pn.Column(dde.feature_map(model.double().cpu(),i[0].unsqueeze(0).cpu().type(torch.DoubleTensor)))))
             i = i.cpu().detach().numpy()
             tabs.append((label,pn.Column(dde.plt_energy_spec(i,signal_frequency,channel_labels), 
                                          dde.plt_power_spec(i,signal_frequency,channel_labels), 

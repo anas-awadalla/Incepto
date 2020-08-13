@@ -2,6 +2,7 @@ from PIL import Image
 import numpy as np
 import torch
 from gb_cam_helper import apply_colormap_on_image, format_np_output
+from torchvision import transforms
 
 
 class CamExtractor():
@@ -87,7 +88,7 @@ class GradCam():
 def get_cam(model, img, target_class, target_layer):
     x = GradCam(model,target_layer)
     cam = x.generate_cam(img)
-    heatmap, heatmap_on_image = apply_colormap_on_image(img, cam, 'hsv')
+    heatmap, heatmap_on_image = apply_colormap_on_image(transforms.ToPILImage(img), cam, 'hsv')
     cam = get_img(cam)
     heatmap = get_img(heatmap)
     heatmap_on_image = get_img(heatmap_on_image)

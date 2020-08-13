@@ -13,7 +13,8 @@ import seaborn as sns
 import panel as pn
 from visualize_filters_maps import visualize_maps_features
 from visualize_filters_maps import visualize_maps_filters
-
+from class_activation_mapping import get_cam
+from guided_backprop import generate_gb
 
 class DashboardDataElements(param.Parameterized):
     
@@ -173,3 +174,44 @@ class DashboardDataElements(param.Parameterized):
                 stdev.append(np.std(np.asarray(i)))
             df = pd.DataFrame({"Channels":channel_labels,"Standard Deviation":stdev})
             return df
+
+        def gb_plot(self, image, model):
+            guided_grads_img,grayscale_guided_grads,pos_sal,neg_sal = generate_gb(model,1,1,image,0)
+        
+            fig = plt.figure()
+
+            ax = fig.add_subplot(131)
+            ax.imshow(np.asarray(guided_grads_img))
+            ax.set_title("Guided Gradiant")
+                
+            ax = fig.add_subplot(131)
+            ax.imshow(np.asarray(grayscale_guided_grads))
+            ax.set_title("Gradient Activation")
+                
+            ax = fig.add_subplot(131)
+            ax.imshow(np.asarray(pos_sal))
+            ax.set_title("Postive Salency")
+            
+            ax = fig.add_subplot(131)
+            ax.imshow(np.asarray(neg_sal))
+            ax.set_title("Negative Salency")
+
+            return fig
+        
+        def cam_plot(self, image, model):
+            cam, heatmap, heatmap_on_image = get_cam(model,image,1,1)
+            fig = plt.figure()
+
+            ax = fig.add_subplot(131)
+            ax.imshow(np.asarray(heatmap))
+            ax.set_title("Heat Map")
+                
+            ax = fig.add_subplot(131)
+            ax.imshow(np.asarray(cam))
+            ax.set_title("Class Activation Map")
+                
+            ax = fig.add_subplot(131)
+            ax.imshow(np.asarray(heatmap_on_image))
+            ax.set_title("Heat Map on Image")
+
+            return fig

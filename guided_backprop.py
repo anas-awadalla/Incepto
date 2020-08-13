@@ -2,9 +2,10 @@ from torch.autograd import Variable
 from PIL import Image
 from torchvision import transforms
 import gb_cam_helper
-from gb_cam_helper import convert_to_grayscale, get_positive_negative_saliency
+from gb_cam_helper import convert_to_grayscale, format_np_output, get_positive_negative_saliency
 import torch
 from torch.nn import ReLU
+import numpy as np
 
 class GuidedBackprop():
     """
@@ -87,14 +88,22 @@ def generate_gb(model, cnn_layer, filter_pos, img, class_target):
     GBP = GuidedBackprop(model)
     # Get gradients
     guided_grads = GBP.generate_gradients(prep_img, 2, 2, 2)
+    guided_grads_img = get_img_from_grad(guided_grads)
     # Convert to grayscale
-    grayscale_guided_grads = convert_to_grayscale(guided_grads)
+    grayscale_guided_grads = get_img_from_grad(convert_to_grayscale(guided_grads))
     
     # save_gradient_images(grayscale_guided_grads, file_name_to_export + '_Guided_BP_gray')
         # Positive and negative saliency maps
     pos_sal, neg_sal = get_positive_negative_saliency(guided_grads)
     
-    
-    save_gradient_images(pos_sal, file_name_to_export + '_pos_sal')
-    save_gradient_images(neg_sal, file_name_to_export + '_neg_sal')
-    print('Layer Guided backprop completed')
+    pos_sal = get_img_from_grad(pos_sal)
+    neg_sal = get_img_from_grad(neg_sal)
+    return guided_grads_img,grayscale_guided_grads,pos_sal,neg_sal
+
+def get_img_from_grad(gradient):
+    gradient = gradient - gradient.min()
+    gradient /= gradient.max()
+    if isinstance(gradient, (np.ndarray, np.generic)):
+        gradient = format_np_output(gradient)
+        gradient = Image.fromarray(gradient)
+    return gradient
