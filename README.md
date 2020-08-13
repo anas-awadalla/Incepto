@@ -20,6 +20,8 @@ new_client.analyze_data(channel_labels=["r","g","b"])
 new_client.detect_ood(gpu=1,batch_size=64)
 #To Attack Model:
 new_client.attack("fsgm",gpu=1,batch_size=64)
+#Model Attack Dashboard:
+#Coming Soon
 ```
 
 
