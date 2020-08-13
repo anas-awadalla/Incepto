@@ -177,13 +177,13 @@ class DashboardDataElements(param.Parameterized):
             df = pd.DataFrame({"Channels":channel_labels,"Standard Deviation":stdev})
             return df
 
-        def gb_plot(self, image, model, cnn_layer, filter_pos):
+        def gb_plot(self, image, model):
             fig = plt.figure(figsize=(40,40))
             index=1
             for num, module_pos in zip(enumerate(model.features),model.features._modules.items()):
                 num = num[0]
                 module_pos = module_pos[0]
-                guided_grads_img,grayscale_guided_grads,pos_sal,neg_sal = generate_gb(model,image,0,num,filter_pos)
+                guided_grads_img,grayscale_guided_grads,pos_sal,neg_sal = generate_gb(model,image,0,num,1)
             
                 ax = fig.add_subplot(8,8,index)
                 ax.imshow(np.asarray(guided_grads_img))
@@ -230,11 +230,10 @@ class DashboardDataElements(param.Parameterized):
 
             return fig
         
-        def plot_image(self, img, target):
+        def plot_img(self, img, target=0):
             fig = plt.figure()
             ax = fig.add_subplot(131)
-            transform = transforms.Compose([transforms.ToPILImage()])
-            ax.imshow(np.asarray(transform(img.squeeze())))
+            ax.imshow(np.asarray(img))
             ax.set_title("Target: "+str(target))
 
             return fig

@@ -53,7 +53,6 @@ def analyze(model, in_distribution, out_of_distribution, channel_labels, is_imag
     for i in out_of_distribution:
         samples.append(torch.utils.data.DataLoader(i, batch_size=len(i), num_workers=0, shuffle=True))
     print("Checking Data Demensions...")
-
     in_dist_shape = list(next(iter(in_distrbution_sample))[0].size())
     for i in (samples):
         assert (list(next(iter(i))[0].size())[1:] == in_dist_shape[1:]), ("Dimensions are not consistent, was looking for dimensions: "+str(in_dist_shape))
@@ -76,6 +75,7 @@ def analyze(model, in_distribution, out_of_distribution, channel_labels, is_imag
             
         print("Generating Graph Layout...")
         tabs = []
+        print(data_labels)
         tabs.append(("Filters ",pn.Column(dde.filter_map(model))))
         for i, label in zip(data, data_labels):
             ten = i[0].unsqueeze(0)
@@ -86,10 +86,9 @@ def analyze(model, in_distribution, out_of_distribution, channel_labels, is_imag
                                          #dde.multi_dem_color_hist(i))))
             transform = transforms.Compose([transforms.ToPILImage()])               
             tabs.append(("Feature Map of "+label,pn.Column(dde.feature_map(model,transform(np.uint8(i))))))
-            tabs.append(("Class Activation Map of "+label,pn.Column(dde.cam_plot(ten,model))))
-            tabs.append(("Guided Backpropogation of "+label,pn.Column(dde.gb_plot(ten,model,1,2))))
+            tabs.append(("Class Activation Map of "+label,pn.Row(pn.Column(dde.plot_img(i,target=0)),pn.Column(dde.cam_plot(ten,model)))))
+            tabs.append(("Guided Backpropogation of "+label,pn.Column(pn.Column(dde.plot_img(i,target=0)),dde.gb_plot(ten,model))))
        
-        # tabs.append(("Filters",pn.Column(dde.filter_map(model))))
         # # def b(event):
         # #     text.value = 'Clicked {0} times'.format(button.clicks)
         # for i, label in zip(feature_data, data_labels):

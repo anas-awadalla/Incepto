@@ -21,9 +21,9 @@ class client():
         
     def analyze_data(self, channel_labels, signal_frequency=None):
         if self.is_image:
-            analyze(model=self.model, in_distribution=self.in_distribution,out_of_distribution=self.out_of_distribution,channel_labels=channel_labels,is_image=True,data_labels=["mPower","mPower"])
+            analyze(model=self.model, in_distribution=self.in_distribution,out_of_distribution=self.out_of_distribution,channel_labels=channel_labels,is_image=True,data_labels=self.data_lables)
         else:
-            analyze(model=self.model, in_distribution=self.in_distribution,out_of_distribution=self.out_of_distribution,channel_labels=channel_labels,signal_frequency=200,data_labels=["mPower","mPower"])
+            analyze(model=self.model, in_distribution=self.in_distribution,out_of_distribution=self.out_of_distribution,channel_labels=channel_labels,signal_frequency=200,data_labels=self.data_lables)
         
     def detect_ood(self, gpu, batch_size):
         extract_features(self.model, self.in_distribution, self.data_labels[0], self.data_labels[1:], self.out_of_distribution, self.in_transform, gpu=gpu, batch_size=batch_size, num_classes=self.num_classes)
@@ -32,16 +32,17 @@ class client():
     # def attack(self, adv_type, gpu, batch_size=200, in_transform=None):
     #     generate_adv_samples(model=self.model,net_type="model",dataset_name="mPower",dataset = self.in_distribution,gpu=gpu,adv_type=adv_type,num_classes=self.num_classes,batch_size=batch_size,in_transform=in_transform)
         
-        
-#     # def adv_training(self):
-    
-#     # def adv_defense(self):
-    
+           
 # files = os.listdir("../../../data3/mPower/data")
 # dataset = parkinsonsData(files, col=8)
-transform = transforms.Compose([transforms.ToTensor()])
+transform = transforms.Compose([transforms.Resize(32),transforms.ToTensor(),])
 dataset = torchvision.datasets.CIFAR10(".",download=True,transform=transform)
-model = torchvision.models.densenet121(pretrained=True)
+model = torchvision.models.resnet.ResNet
+checkpoint = torch.load("/home/anasa2/Incepto/pre_trained/kaggle90-best.pth") 
+model = checkpoint.cpu()
+ben = torchvision.datasets.ImageFolder(root='/home/anasa2/Incepto/test_data/', transform=transform)
+mal = torchvision.datasets.ImageFolder(root='/home/anasa2/Incepto/mal_test_data/', transform=transform)
+
 # model = torch.load("/home/anasa2/Incepto/pre_trained/parkinsonsNet-outbound_mpower-outbound.pth")
-x = client(model,dataset,dataset,data_labels=["mPower","mPower"],num_classes=1,is_image=True)
+x = client(model,mal,[dataset,ben],data_labels=["HAMmal","Cifar10","HAMBenign"],num_classes=2,is_image=True)
 x.analyze_data(channel_labels=["r","g","b"])
