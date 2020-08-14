@@ -1,4 +1,4 @@
-# Incepto: Adversarial ML Framework for Medical Models
+# Incepto: Adversarial ML and Model Interpretability Framework for Medical Models
 
 This project is built on top of https://github.com/pokaxpoka/deep_Mahalanobis_detector and the paper: https://arxiv.org/abs/1807.03888
 
