@@ -85,9 +85,9 @@ def analyze(model, in_distribution, out_of_distribution, channel_labels, is_imag
                                          dde.color_dist_img(i), )))
                                          #dde.multi_dem_color_hist(i))))
             transform = transforms.Compose([transforms.ToPILImage()])               
-            tabs.append(("Feature Map of "+label,pn.Column(dde.feature_map(model,transform(np.uint8(i))))))
-            tabs.append(("Class Activation Map of "+label,pn.Row(pn.Column(dde.plot_img(i,target=0)),pn.Column(dde.cam_plot(ten,model)))))
-            tabs.append(("Guided Backpropogation of "+label,pn.Column(pn.Column(dde.plot_img(i,target=0)),dde.gb_plot(ten,model))))
+            tabs.append(("Feature Map of "+label,pn.Column(dde.feature_map(model,transform(np.uint8(ten[0]))))))
+            tabs.append(("Class Activation Map of "+label,pn.Row(pn.Column(dde.plot_img(transform(ten[0]),target=0)),pn.Column(dde.cam_plot(ten,model)))))
+            tabs.append(("Guided Backpropogation of "+label,pn.Row(pn.Column(dde.plot_img(transform(ten[0]),target=0)),pn.Column(dde.gb_plot(ten,model)))))
        
         # # def b(event):
         # #     text.value = 'Clicked {0} times'.format(button.clicks)

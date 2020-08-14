@@ -39,7 +39,7 @@ class DashboardDataElements(param.Parameterized):
             # plt.xlim([0, 256])
             ax = plt.hist(image.ravel(), bins = 256)
             vlo = cv2.Laplacian(image, cv2.CV_32F).var()
-            plt.text(0.2, 1, ('Variance of Laplacian: '+str(vlo)), style='italic', bbox={'facecolor': 'white', 'alpha': 0.5, 'pad': 10})
+            plt.text(0.5, 1, ('Variance of Laplacian: '+str(vlo)), style='italic', bbox={'facecolor': 'white', 'alpha': 0.5, 'pad': 10})
         
             return fig
         
@@ -233,7 +233,7 @@ class DashboardDataElements(param.Parameterized):
         def plot_img(self, img, target=0):
             fig = plt.figure()
             ax = fig.add_subplot(131)
-            ax.imshow(np.asarray(img))
+            ax.imshow(img)
             ax.set_title("Target: "+str(target))
 
             return fig

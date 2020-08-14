@@ -79,6 +79,7 @@ def visualize_maps_filters_2d(model):
     extractor = Extractor(model)
     extractor.activate()
 
+    plt.figure(figsize=(30, 30))
     for index, filter in enumerate(extractor.CNN_weights[0]):
         ax = fig.add_subplot(8, 8, index + 1)
         ax.imshow(filter[0, :, :].cpu().detach())

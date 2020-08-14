@@ -40,6 +40,7 @@ dataset = torchvision.datasets.CIFAR10(".",download=True,transform=transform)
 model = torchvision.models.resnet.ResNet
 checkpoint = torch.load("/home/anasa2/Incepto/pre_trained/kaggle90-best.pth") 
 model = checkpoint.cpu()
+print(model)
 ben = torchvision.datasets.ImageFolder(root='/home/anasa2/Incepto/test_data/', transform=transform)
 mal = torchvision.datasets.ImageFolder(root='/home/anasa2/Incepto/mal_test_data/', transform=transform)
 
