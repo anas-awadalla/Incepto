@@ -10,6 +10,10 @@ What Can You Do?
 
 📊  Visualize/Compare Whole Datasets or Datapoints and Feature maps!
 
+# Status:
+In Development
+
+
 # How to use Incepto?:
 ```python
 #To Set Up:
