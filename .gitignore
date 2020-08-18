@@ -4,3 +4,5 @@ Incepto/__pycache__
 pre_trained
 test_data
 mal_test_data
+cifar-10-python.tar.gz
+cifar-10-python-batches.py
