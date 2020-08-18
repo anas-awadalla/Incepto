@@ -5,13 +5,7 @@ import numpy as np
 import pandas as pd
 import plotly.express as px
 import streamlit as st
-import umap
-from category_encoders.one_hot import OneHotEncoder
-from MulticoreTSNE import MulticoreTSNE as TSNE
-from sklearn.decomposition import PCA
-from sklearn.impute import KNNImputer
-from sklearn.neighbors import KNeighborsClassifier
-from snps import SNPs
+from streamlit import caching
 
 warnings.filterwarnings("ignore")
 st.set_option('deprecation.showfileUploaderEncoding', False)
@@ -19,18 +13,27 @@ st.set_option('deprecation.showfileUploaderEncoding', False)
 
 def main():
     # Render the readme as markdown using st.markdown.
-    readme_text = st.markdown(get_file_content_as_string("intro.md"))
-    st.title("Project Video")
-    st.video(None)
+    st.markdown(get_file_content_as_string("Incepto/dashboard/intro.md"))
+
     # Once we have the dependencies, add a selector for the app mode on the sidebar.
-    st.sidebar.title("Model Settings")
+    if st.sidebar.button("Go to Guide"):
+        caching.clear_cache()
+        st.markdown(get_file_content_as_string("Incepto/dashboard/details.md"))
+
+    st.sidebar.title("Data Settings")
     # select which set of SNPs to explore
-    aisnp_set = st.sidebar.radio(
-        "Set of model type:",
-        ("Facial classification", "Text classification"),
+
+    dataset = st.sidebar.selectbox(
+        "Set data type:",
+        ("-", ""),
+    )
+    
+    visualization = st.sidebar.selectbox(
+        "Set visualization type:",
+        ("-", ""),
     )
 
-    if aisnp_set == "Facial classification":
+    if dataset == "Facial classification":
         resize = st.sidebar.number_input(label="Enter an image resize size. Ex. 256", step=1, min_value=1, value=256)
         crop = st.sidebar.number_input(label="Enter an image center crop size. Ex. 256 (enter 1 for None)", step=1,
                                        min_value=1, value=256)
@@ -40,7 +43,7 @@ def main():
         normalize = st.sidebar.text_input(label="Enter your desired normalization in the format: [[0.5,0.5,0.5],[0.5,"
                                                 "0.5,0.5]]", value="[[0.5,0.5,0.5],[0.5,0.5,0.5]]")
 
-    elif aisnp_set == "Text classification":
+    elif dataset == "Text classification":
         tokenizer = st.sidebar.radio(
             "Tokenizer:", ("T5", "Bert")
         )
@@ -63,7 +66,6 @@ def main():
                 f"Sorry, there was a problem processing your model file.\n {e}"
             )
 
-    st.sidebar.button("Submit")
 
     # filter and encode the user record
     #     user_record, aisnps_1kg = filter_user_genotypes(userdf, aisnps_1kg)
@@ -117,9 +119,6 @@ def main():
     #     with st.spinner("Loading 1k Genomes DataFrame"):
     #         st.subheader(table_title)
     #         st.dataframe(aisnps_1kg)
-
-    # Render the readme as markdown using st.markdown.
-    readme_text = st.markdown(get_file_content_as_string("details.md"))
 
 
 @st.cache

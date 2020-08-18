@@ -1,4 +1,3 @@
-# Pytorch Bias Detection
-The figure below displays the visualizations of your model after running bias tests!
+# Incepto Data Analysis Dashboard
 
-**You can visualize your specific model by choosing your model type and uploading the model below.**
+**You can visualize your specific model's  response to yor defined datasets or upload new data of your choice!**
