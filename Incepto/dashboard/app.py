@@ -11,7 +11,7 @@ warnings.filterwarnings("ignore")
 st.set_option('deprecation.showfileUploaderEncoding', False)
 
 
-def main():
+def app(in_dist_name="in", ood_data_names=["out","out2"], image=True):
     # Render the readme as markdown using st.markdown.
     st.markdown(get_file_content_as_string("Incepto/dashboard/intro.md"))
 
@@ -24,47 +24,48 @@ def main():
     # select which set of SNPs to explore
 
     dataset = st.sidebar.selectbox(
-        "Set data type:",
-        ("-", ""),
+        "Set Dataset:",
+        (in_dist_name,*ood_data_names),
     )
     
-    visualization = st.sidebar.selectbox(
-        "Set visualization type:",
-        ("-", ""),
-    )
-
-    if dataset == "Facial classification":
-        resize = st.sidebar.number_input(label="Enter an image resize size. Ex. 256", step=1, min_value=1, value=256)
-        crop = st.sidebar.number_input(label="Enter an image center crop size. Ex. 256 (enter 1 for None)", step=1,
-                                       min_value=1, value=256)
-        if crop > resize:
-            st.sidebar.error("crop size should be less than or equal to resize size")
-
-        normalize = st.sidebar.text_input(label="Enter your desired normalization in the format: [[0.5,0.5,0.5],[0.5,"
-                                                "0.5,0.5]]", value="[[0.5,0.5,0.5],[0.5,0.5,0.5]]")
-
-    elif dataset == "Text classification":
-        tokenizer = st.sidebar.radio(
-            "Tokenizer:", ("T5", "Bert")
+    if image:
+        visualization = st.sidebar.selectbox(
+            "Set Visualization Type:",
+            ("-", "Color Distribution for Entire Dataset", "Pixel Distribution for Entire Dataset", "Class Activation Map", "Guided Backpropgation Map"),
         )
-        max_length = st.sidebar.number_input(label="Enter text max length", step=1,
-                                             min_value=1, value=256)
+    else:
+        visualization = st.sidebar.selectbox(
+            "Set Visualization Type:",
+            ("-", "Average Signal for Entire Dataset", "Class Activation Map", "Guided Backpropgation Map"),
+        )
 
-    classes = st.sidebar.text_input(label="Enter the output classes in a comma separated ascending social class "
-                                          "order. Ex. \"1,2,0,3\" ")
+    if image:
+        if visualization == "":
+            caching.clear_cache()
+            st.title("")
+        elif visualization == "-":
+            caching.clear_cache()
+            st.title("")
+            
+    if st.sidebar.button("Visualize Model"):
+        caching.clear_cache()
+        st.title("")
+        
+        
+
     # upload the file
-    user_file = st.sidebar.file_uploader("Upload your model in .pth format:")
-    # Collapsable user AISNPs DataFrame
-    if user_file is not None:
-        try:
-            with st.spinner("Uploading your model..."):
-                with open("user_snps_file.txt", "w") as file:
-                    user_file.seek(0)
-                    shutil.copyfileobj(user_file, file)
-        except Exception as e:
-            st.error(
-                f"Sorry, there was a problem processing your model file.\n {e}"
-            )
+    # user_file = st.sidebar.file_uploader("Upload your model in .pth format:")
+
+    # if user_file is not None:
+    #     try:
+    #         with st.spinner("Uploading your model..."):
+    #             with open("user_snps_file.txt", "w") as file:
+    #                 user_file.seek(0)
+    #                 shutil.copyfileobj(user_file, file)
+    #     except Exception as e:
+    #         st.error(
+    #             f"Sorry, there was a problem processing your model file.\n {e}"
+    #         )
 
 
     # filter and encode the user record
@@ -275,4 +276,4 @@ def plot_3d(X_reduced, dfsamples, pop):
 
 
 if __name__ == "__main__":
-    main()
+    app()
