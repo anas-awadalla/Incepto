@@ -125,3 +125,4 @@ webencodings==0.5.1
 Werkzeug==1.0.1
 widgetsnbextension==3.5.1
 zipp==3.1.0
+torchray

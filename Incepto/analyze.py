@@ -5,28 +5,9 @@ from matplotlib import pyplot as plt
 import cv2
 from PIL import Image
 import numpy as np
-import param
 import pandas as pd 
 import numpy as np
-import seaborn as sns
-import panel as pn
 from torchvision import datasets, transforms
-from dashboard import DashboardDataElements
-
-
-# configure seaborn settings
-sns.set()
-sns.set(style="ticks", color_codes=True)
-# sns.set_context("notebook")
-sns.set({ "figure.figsize": (12/1.5,8/1.5) })
-sns.set_style("whitegrid", {'axes.edgecolor':'gray'})
-plt.rcParams['figure.dpi'] = 360
-
-# add a grid to the plots 
-plt.rcParams['axes.grid'] = True
-plt.rcParams['axes.axisbelow'] = True
-
-pn.extension()
 
 
 """
@@ -57,11 +38,6 @@ def analyze(model, in_distribution, out_of_distribution, channel_labels, is_imag
     for i in (samples):
         assert (list(next(iter(i))[0].size())[1:] == in_dist_shape[1:]), ("Dimensions are not consistent, was looking for dimensions: "+str(in_dist_shape))
     print("Dimensions are consistent - Shape: "+str(in_dist_shape[1:]))
-    
-
-    dde = DashboardDataElements(name='')
-    dashboard_title = '### Out of Distribution Data Analysis'
-    dashboard_desc = 'Comparing Different Datasets'
 
     
     if is_image:
@@ -74,32 +50,14 @@ def analyze(model, in_distribution, out_of_distribution, channel_labels, is_imag
             feature_data.append(val[0])
             
         print("Generating Graph Layout...")
-        tabs = []
-        print(data_labels)
-        tabs.append(("Filters ",pn.Column(dde.filter_map(model))))
+
         for i, label in zip(data, data_labels):
-            ten = i[0].unsqueeze(0)
-            i = sum(i)/len(i)
-            i = i.permute(1,2,0).cpu().detach().numpy()
-            tabs.append((label,pn.Column(dde.pixel_dist_img(i),
-                                         dde.color_dist_img(i), )))
-                                         #dde.multi_dem_color_hist(i))))
-            transform = transforms.Compose([transforms.ToPILImage()])               
-            tabs.append(("Feature Map of "+label,pn.Column(dde.feature_map(model,transform(np.uint8(ten[0]))))))
-            tabs.append(("Class Activation Map of "+label,pn.Row(pn.Column(dde.plot_img(transform(ten[0]),target=0)),pn.Column(dde.cam_plot(ten,model)))))
-            tabs.append(("Guided Backpropogation of "+label,pn.Row(pn.Column(dde.plot_img(transform(ten[0]),target=0)),pn.Column(dde.gb_plot(ten,model)))))
-       
-        # # def b(event):
-        # #     text.value = 'Clicked {0} times'.format(button.clicks)
-        # for i, label in zip(feature_data, data_labels):
-        #     transform = transforms.Compose([transforms.ToPILImage()])
-        #     button = pn.widgets.Button(name='Click me', button_type='primary')
-        #     tabs.append((label+" Feature Map",pn.Column(dde.feature_map(model,np.array(transform(i)),0),button)))
-            
-                
-        dashboard = pn.Column(dashboard_title,dashboard_desc, dde.param,  pn.Tabs(*tabs))
-        print("Conducting the following comparisions for image data: Color distribution, Pixel distribution, and Variance of laplacian operators")
-    
+            data_tensors = i
+            total_arr = sum(i)/len(i)
+            total_arr = total_arr.permute(1,2,0).cpu().detach().numpy()       
+            transform = transforms.Compose([transforms.ToPILImage()])            
+
+
     else:
         print("Conducting the following comparisions for signal data: Min/Max/Mean/StDev, Energy, and Power")
         assert(signal_frequency is not None), "Signal Frequency cannot be None"
@@ -110,22 +68,12 @@ def analyze(model, in_distribution, out_of_distribution, channel_labels, is_imag
             
         print("Generating Graph Layout...")
 
-        tabs = []
-        # tabs.append(("Filters",pn.Column(dde.filter_map(model))))
 
-        for i, label in zip(data, data_labels):
-            # i = sum(i)/len(i)
-            # tabs.append(("Features of "+label,pn.Column(dde.feature_map(model.double().cpu(),i[0].unsqueeze(0).cpu().type(torch.DoubleTensor)))))
-            i = i.cpu().detach().numpy()
-            tabs.append((label,pn.Column(dde.plt_energy_spec(i,signal_frequency,channel_labels), 
-                                         dde.plt_power_spec(i,signal_frequency,channel_labels), 
-                                         dde.mean_plot(i,channel_labels), dde.min_plot(i,channel_labels), 
-                                         dde.max_plot(i,channel_labels), dde.stdev_plot(i,channel_labels) )))
-        dashboard = pn.Column(dashboard_title,dashboard_desc, dde.param,  pn.Tabs(*tabs))
-
-    
-
-    # display the dashboard, with all elements and data embedded so 
-    # no 'calls' to a data source are required
-    dashboard.show()
-    
+        # for i, label in zip(data, data_labels):
+        #     # i = sum(i)/len(i)
+        #     # tabs.append(("Features of "+label,pn.Column(dde.feature_map(model.double().cpu(),i[0].unsqueeze(0).cpu().type(torch.DoubleTensor)))))
+        #     i = i.cpu().detach().numpy()
+        #     tabs.append((label,pn.Column(dde.plt_energy_spec(i,signal_frequency,channel_labels), 
+        #                                  dde.plt_power_spec(i,signal_frequency,channel_labels), 
+        #                                  dde.mean_plot(i,channel_labels), dde.min_plot(i,channel_labels), 
+        #                                  dde.max_plot(i,channel_labels), dde.stdev_plot(i,channel_labels) )))

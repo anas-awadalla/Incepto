@@ -6,15 +6,38 @@ import pandas as pd
 import plotly.express as px
 import streamlit as st
 from streamlit import caching
+import torchvision
+from torchray.attribution.deconvnet import deconvnet
+import torchray
+from torchray.benchmark import get_example_data, plot_example
+from torchray.attribution.grad_cam import grad_cam
+from torchray.attribution.guided_backprop import guided_backprop
+from torchray.attribution.excitation_backprop import excitation_backprop
+from torchray.attribution.gradient import gradient
+from torchray.attribution.extremal_perturbation import extremal_perturbation, contrastive_reward
+from torchray.attribution.linear_approx import linear_approx
+from torchray.attribution.rise import rise
+
+
+import torch
+from matplotlib import pyplot as plt
 
 warnings.filterwarnings("ignore")
 st.set_option('deprecation.showfileUploaderEncoding', False)
 
+def get_layers(model):
+    layers=[]
+    for name, param in model.named_parameters():
+        name = name.replace("weight","bias")
+        name = name.split(".bias")[0]
+        if(name not in layers):
+            layers.append(name)
+    return layers
 
-def app(in_dist_name="in", ood_data_names=["out","out2"], image=True):
+def app(model = torchvision.models.resnet18().eval(), in_dist_name="in", ood_data_names=["out","out2"], image=True):
     # Render the readme as markdown using st.markdown.
     st.markdown(get_file_content_as_string("Incepto/dashboard/intro.md"))
-
+    layers = get_layers(model)
     # Once we have the dependencies, add a selector for the app mode on the sidebar.
     if st.sidebar.button("Go to Guide"):
         caching.clear_cache()
@@ -31,25 +54,116 @@ def app(in_dist_name="in", ood_data_names=["out","out2"], image=True):
     if image:
         visualization = st.sidebar.selectbox(
             "Set Visualization Type:",
-            ("-", "Color Distribution for Entire Dataset", "Pixel Distribution for Entire Dataset", "Class Activation Map", "Guided Backpropgation Map"),
+            ("-", "Color Distribution for Entire Dataset", "Pixel Distribution for Entire Dataset", "Deconvolution", "Excitation Backpropgation","Gradient","Grad-CAM","Guided Backpropagation","Linear Approximation", "Extremal Perturbation", "RISE"),
         )
     else:
         visualization = st.sidebar.selectbox(
             "Set Visualization Type:",
-            ("-", "Average Signal for Entire Dataset", "Class Activation Map", "Guided Backpropgation Map"),
+            ("-", "Average Signal for Entire Dataset", "Deconvolution", "Excitation Backpropgation","Gradient","Grad-CAM","Guided Backpropagation","Linear Approximation", "Extremal Perturbation", "RISE"),
         )
 
     if image:
-        if visualization == "":
-            caching.clear_cache()
-            st.title("")
-        elif visualization == "-":
-            caching.clear_cache()
-            st.title("")
+        if visualization == "Deconvolution":
+            with st.spinner("Generating Plot"):
+                caching.clear_cache()
+                saliency_layer=st.selectbox("Select Layer:",tuple(layers))
+                # st.number_input(label="Enter a channel number:", step=1, min_value=0, value=0)
+                _, x, category_id, _ = get_example_data()
+                saliency = deconvnet(model, x.cpu(), category_id, saliency_layer=saliency_layer)
+                fig = plt.figure(figsize=(40,40))
+                ax = fig.add_subplot(131)
+                ax.imshow(np.asarray(saliency.squeeze()))
+                ax = fig.add_subplot(131)
+                # ax.imshow(np.asarray(x.cpu().squeeze().detach().numpy() ))
+                st.pyplot(fig)
+        elif visualization == "Grad-CAM":
+            with st.spinner("Generating Plot"):
+                caching.clear_cache()
+                saliency_layer=st.selectbox("Select Layer:",tuple(layers))
+                # st.number_input(label="Enter a channel number:", step=1, min_value=0, value=0)
+                _, x, category_id, _ = get_example_data()
+                saliency = linear_approx(model, x.cpu(), category_id, saliency_layer=saliency_layer)
+                fig = plt.figure(figsize=(40,40))
+                ax = fig.add_subplot(131)
+                ax.imshow(np.asarray(saliency.squeeze().detach().numpy() ))
+                ax = fig.add_subplot(131)
+                # ax.imshow(np.asarray(x.cpu().squeeze().detach().numpy() ))
+                st.pyplot(fig)
+        elif visualization == "Guided Backpropagation":
+            with st.spinner("Generating Plot"):
+                caching.clear_cache()
+                saliency_layer=st.selectbox("Select Layer:",tuple(layers))
+                # st.number_input(label="Enter a channel number:", step=1, min_value=0, value=0)
+                _, x, category_id, _ = get_example_data()
+                saliency = guided_backprop(model, x.cpu(), category_id, saliency_layer=saliency_layer)
+                fig = plt.figure(figsize=(40,40))
+                ax = fig.add_subplot(131)
+                ax.imshow(np.asarray(saliency.squeeze().detach().numpy() ))
+                ax = fig.add_subplot(131)
+            # ax.imshow(np.asarray(x.cpu().squeeze().detach().numpy() ))
+            st.pyplot(fig)
+        elif visualization == "Gradient":
+            with st.spinner("Generating Plot"):
+                caching.clear_cache()
+                saliency_layer=st.selectbox("Select Layer:",tuple(layers))
+                # st.number_input(label="Enter a channel number:", step=1, min_value=0, value=0)
+                _, x, category_id, _ = get_example_data()
+                saliency = gradient(model, x.cpu(), category_id, saliency_layer=saliency_layer)
+                fig = plt.figure(figsize=(40,40))
+                ax = fig.add_subplot(131)
+                ax.imshow(np.asarray(saliency.squeeze().detach().numpy() ))
+                ax = fig.add_subplot(131)
+            # ax.imshow(np.asarray(x.cpu().squeeze().detach().numpy() ))
+            st.pyplot(fig)
+        elif visualization == "Linear Approximation":
+            with st.spinner("Generating Plot"):
+                caching.clear_cache()
+                saliency_layer=st.selectbox("Select Layer:",tuple(layers))
+                # st.number_input(label="Enter a channel number:", step=1, min_value=0, value=0)
+                _, x, category_id, _ = get_example_data()
+                saliency = gradient(model, x.cpu(), category_id, saliency_layer=saliency_layer)
+                fig = plt.figure(figsize=(40,40))
+                ax = fig.add_subplot(131)
+                ax.imshow(np.asarray(saliency.squeeze().detach().numpy() ))
+                ax = fig.add_subplot(131)
+            # ax.imshow(np.asarray(x.cpu().squeeze().detach().numpy() ))
+            st.pyplot(fig)
+        elif visualization == "Extremal Perturbation":
+            with st.spinner("Generating Plot"):
+                caching.clear_cache()
+                saliency_layer=st.selectbox("Select Layer:",tuple(layers))
+                # st.number_input(label="Enter a channel number:", step=1, min_value=0, value=0)
+                _, x, category_id, _ = get_example_data()
+                masks_1, _ = extremal_perturbation(
+                    model, x.cpu(), category_id,
+                    reward_func=contrastive_reward,
+                    debug=True,
+                    areas=[0.12],)
+                fig = plt.figure(figsize=(40,40))
+                ax = fig.add_subplot(131)
+                ax.imshow(np.asarray(masks_1.squeeze().detach().numpy() ))
+                ax = fig.add_subplot(131)
+                # ax.imshow(np.asarray(x.cpu().squeeze().detach().numpy() ))
+                st.pyplot(fig)
+        elif visualization == "RISE":
+            with st.spinner("Generating Plot"):
+                caching.clear_cache()
+                # saliency_layer=st.selectbox("Select Layer:",tuple(layers))
+                # st.number_input(label="Enter a channel number:", step=1, min_value=0, value=0)
+                _, x, category_id, _ = get_example_data()
+                saliency = rise(model, x.cpu())
+                saliency = saliency[:, category_id].unsqueeze(0)
+                fig = plt.figure(figsize=(40,40))
+                ax = fig.add_subplot(131)
+                ax.imshow(np.asarray(saliency.squeeze().detach().numpy() ))
+                ax = fig.add_subplot(131)
+                # ax.imshow(np.asarray(x.cpu().squeeze().detach().numpy() ))
+                st.pyplot(fig)
             
     if st.sidebar.button("Visualize Model"):
         caching.clear_cache()
         st.title("")
+        
         
         
 
@@ -130,149 +244,13 @@ def get_file_content_as_string(mdfile):
     :type mdfile: str
     :return: file contents
     :rtype: str
-    """
+    """    
     mdstring = ""
     with open(mdfile, "r") as f:
         for line in f:
             mdstring += line
     return mdstring
 
-
-def get_1kg_samples():
-    """Download the sample information for the 1000 Genomes Project
-
-    :return: DataFrame of sample-level population information
-    :rtype: pandas DataFrame
-    """
-    onekg_samples = "data/integrated_call_samples_v3.20130502.ALL.panel"
-    dfsamples = pd.read_csv(onekg_samples, sep="\t")
-    dfsamples.set_index("sample", inplace=True)
-    dfsamples.drop(columns=["Unnamed: 4", "Unnamed: 5"], inplace=True)
-    dfsamples.columns = ["population", "super population", "gender"]
-    return dfsamples
-
-
-@st.cache(show_spinner=True)
-def encode_genotypes(df):
-    """One-hot encode the genotypes
-
-    :param df: A DataFrame of samples with genotypes as columns
-    :type df: pandas DataFrame
-    :return: pandas DataFrame of one-hot encoded columns for genotypes and OHE instance
-    :rtype: pandas DataFrame, OneHotEncoder instance
-    """
-    ohe = OneHotEncoder(cols=df.columns, handle_missing="return_nan")
-    X = ohe.fit_transform(df)
-    return pd.DataFrame(X, index=df.index), ohe
-
-
-def dimensionality_reduction(X, algorithm="PCA"):
-    """Reduce the dimensionality of the AISNPs
-    :param X: One-hot encoded 1kG AISNPs.
-    :type X: pandas DataFrame
-    :param algorithm: The type of dimensionality reduction to perform.
-        One of {PCA, UMAP, t-SNE}
-    :type algorithm: str
-    :returns: The transformed X DataFrame, reduced to 3 components by <algorithm>,
-    and the dimensionality reduction Transformer object.
-    """
-    n_components = 3
-
-    if algorithm == "PCA":
-        reducer = PCA(n_components=n_components)
-    elif algorithm == "t-SNE":
-        reducer = TSNE(n_components=n_components, n_jobs=4)
-    elif algorithm == "UMAP":
-        reducer = umap.UMAP(
-            n_components=n_components, min_dist=0.2, metric="dice", random_state=42
-        )
-    else:
-        return None, None
-
-    X_reduced = reducer.fit_transform(X.values)
-
-    return pd.DataFrame(X_reduced, columns=["x", "y", "z"], index=X.index), reducer
-
-
-@st.cache(show_spinner=True)
-def filter_user_genotypes(userdf, aisnps_1kg):
-    """Filter the user's uploaded genotypes to the AISNPs
-
-    :param userdf: The user's DataFrame from SNPs
-    :type userdf: pandas DataFrame
-    :param aisnps_1kg: The DataFrame containing snps for the 1kg project samples
-    :type aisnps_1kg: pandas DataFrame
-    :return: The user's DataFrame of AISNPs as columns, The 1kg DataFrame with user appended
-    :rtype: pandas DataFrame
-    """
-    user_record = pd.DataFrame(index=["your_sample"], columns=aisnps_1kg.columns)
-    for snp in user_record.columns:
-        try:
-            user_record[snp] = userdf.loc[snp]["genotype"]
-        except KeyError:
-            continue
-    aisnps_1kg = aisnps_1kg.append(user_record)
-    return user_record, aisnps_1kg
-
-
-@st.cache(show_spinner=True)
-def impute_missing(aisnps_1kg):
-    """Use scikit-learns KNNImputer to impute missing genotypes for AISNPs
-
-    :param aisnps_1kg: DataFrame of all samples including user's encoded genotypes.
-    :type aisnps_1kg: pandas DataFrame
-    :return: DataFrame with nan values filled in my KNNImputer
-    :rtype: pandas DataFrame
-    """
-    imputer = KNNImputer(n_neighbors=9)
-    imputed_aisnps = imputer.fit_transform(aisnps_1kg)
-    return np.rint(imputed_aisnps[-1])
-
-
-def plot_3d(X_reduced, dfsamples, pop):
-    """Display the 3d scatter plot.
-
-    :param X_reduced: DataFrame of all samples feature-space features.
-    :type X_reduced: pandas DataFrame
-    :param dfsamples: DataFrame witih sample-level info on each 1kg sample.
-    :type dfsamples: pandas DataFrame
-    :param pop: The population resolution to plot
-    :type pop: str
-    :return: plotly figure
-    :rtype: plotly figure
-    """
-    X = np.hstack((X_reduced, dfsamples))
-    columns = [
-        "component_1",
-        "component_2",
-        "component_3",
-        "population",
-        "super population",
-        "gender",
-    ]
-    df = pd.DataFrame(X, columns=columns, index=dfsamples.index)
-    color_discrete_map = {"me": "rgb(0,0,0)"}
-    df["size"] = 16
-    if "me" in dfsamples.index.tolist():
-        df["size"].loc["me"] = 75
-
-    fig = px.scatter_3d(
-        df,
-        x="component_1",
-        y="component_2",
-        z="component_3",
-        color=pop,
-        color_discrete_map=color_discrete_map,
-        symbol=pop,
-        height=600,
-        size="size",
-        opacity=0.95,
-        color_discrete_sequence=["#008fd5", "#fc4f30", "#e5ae38", "#6d904f", "#810f7c"],
-    )
-    if "me" not in dfsamples.index.tolist():
-        fig.update_traces(marker=dict(size=2))
-
-    return fig
 
 
 if __name__ == "__main__":
