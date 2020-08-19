@@ -17,6 +17,7 @@ from torchray.attribution.gradient import gradient
 from torchray.attribution.extremal_perturbation import extremal_perturbation, contrastive_reward
 from torchray.attribution.linear_approx import linear_approx
 from torchray.attribution.rise import rise
+from lucent.optvis import render, param, transform, objectives
 
 
 import torch
@@ -199,7 +200,11 @@ def app(model = torchvision.models.resnet18().eval(), in_dist_name="in", ood_dat
             
     if st.sidebar.button("Visualize Model"):
         caching.clear_cache()
-        st.title("")
+        saliency_layer=st.selectbox("Select Layer:",tuple(layers))
+        channel = st.number_input(label="Enter a channel number:", step=1, min_value=0, value=0)
+        obj = objectives.channel(saliency_layer, channel)
+        fig = render.render_vis(model, obj, show_inline=False)
+        st.pyplot(fig)
         
         
         
