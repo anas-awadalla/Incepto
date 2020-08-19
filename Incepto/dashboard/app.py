@@ -21,6 +21,8 @@ from torchray.attribution.rise import rise
 
 import torch
 from matplotlib import pyplot as plt
+import cv2
+import matplotlib as mpl
 
 warnings.filterwarnings("ignore")
 st.set_option('deprecation.showfileUploaderEncoding', False)
@@ -159,6 +161,41 @@ def app(model = torchvision.models.resnet18().eval(), in_dist_name="in", ood_dat
                 ax = fig.add_subplot(131)
                 # ax.imshow(np.asarray(x.cpu().squeeze().detach().numpy() ))
                 st.pyplot(fig)
+        elif visualization == "Color Distribution for Entire Dataset":
+            with st.spinner("Generating Plot"):
+                caching.clear_cache()
+                # saliency_layer=st.selectbox("Select Layer:",tuple(layers))
+                # st.number_input(label="Enter a channel number:", step=1, min_value=0, value=0)
+                _, x, category_id, _ = get_example_data()
+                x = sum(x)/len(x)
+                image = x.cpu().detach().numpy()
+                fig = plt.figure()
+                mpl.rcParams.update({'font.size': 15})
+                _ = plt.hist(image[:, :, 0].ravel(), bins = 256, color = 'red', alpha = 0.5)
+                _ = plt.hist(image[:, :, 1].ravel(), bins = 256, color = 'Green', alpha = 0.5)
+                _ = plt.hist(image[:, :, 2].ravel(), bins = 256, color = 'Blue', alpha = 0.5)
+                _ = plt.xlabel('Intensity Value')
+                _ = plt.ylabel('Count')
+                _ = plt.legend(['Red_Channel', 'Green_Channel', 'Blue_Channel'])
+                # ax.imshow(np.asarray(x.cpu().squeeze().detach().numpy() ))
+                st.pyplot(fig)
+        elif visualization == "Pixel Distribution for Entire Dataset":
+            with st.spinner("Generating Plot"):
+                caching.clear_cache()
+                
+                _, x, category_id, _ = get_example_data()
+                x = sum(x)/len(x)
+                image = x.cpu().detach().numpy()
+                fig = plt.figure(figsize=(40,40))
+                plt.ylabel("Count")
+                plt.xlabel("Intensity Value")
+                mpl.rcParams.update({'font.size': 55})
+
+                ax = plt.hist(x.cpu().detach().numpy().ravel(), bins = 256)
+                vlo = cv2.Laplacian(x.cpu().detach().numpy().ravel(), cv2.CV_32F).var()
+                plt.text(1, 1, ('Variance of Laplacian: '+str(vlo)), style='italic', bbox={'facecolor': 'white', 'alpha': 0.5, 'pad': 10})
+                st.pyplot(fig)
+            mpl.rcParams.update({'font.size': 15})
             
     if st.sidebar.button("Visualize Model"):
         caching.clear_cache()
