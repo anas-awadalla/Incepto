@@ -17,8 +17,7 @@ from torchray.attribution.gradient import gradient
 from torchray.attribution.extremal_perturbation import extremal_perturbation, contrastive_reward
 from torchray.attribution.linear_approx import linear_approx
 from torchray.attribution.rise import rise
-from lucent.optvis import render, param, transform, objectives
-
+from flashtorch.activmax import GradientAscent
 
 import torch
 from matplotlib import pyplot as plt
@@ -67,7 +66,6 @@ def app(model = torchvision.models.resnet18().eval(), in_dist_name="in", ood_dat
 
     if image:
         if visualization == "Deconvolution":
-            with st.spinner("Generating Plot"):
                 caching.clear_cache()
                 saliency_layer=st.selectbox("Select Layer:",tuple(layers))
                 # st.number_input(label="Enter a channel number:", step=1, min_value=0, value=0)
@@ -76,8 +74,8 @@ def app(model = torchvision.models.resnet18().eval(), in_dist_name="in", ood_dat
                 fig = plt.figure(figsize=(40,40))
                 ax = fig.add_subplot(131)
                 ax.imshow(np.asarray(saliency.squeeze()))
-                ax = fig.add_subplot(131)
-                # ax.imshow(np.asarray(x.cpu().squeeze().detach().numpy() ))
+                ax = fig.add_subplot(132)
+                ax.imshow(np.asarray(x.cpu().squeeze().permute(1,2,0).detach().numpy() ))
                 st.pyplot(fig)
         elif visualization == "Grad-CAM":
             with st.spinner("Generating Plot"):
@@ -89,8 +87,8 @@ def app(model = torchvision.models.resnet18().eval(), in_dist_name="in", ood_dat
                 fig = plt.figure(figsize=(40,40))
                 ax = fig.add_subplot(131)
                 ax.imshow(np.asarray(saliency.squeeze().detach().numpy() ))
-                ax = fig.add_subplot(131)
-                # ax.imshow(np.asarray(x.cpu().squeeze().detach().numpy() ))
+                ax = fig.add_subplot(132)
+                ax.imshow(np.asarray(x.cpu().squeeze().permute(1,2,0).detach().numpy() ))
                 st.pyplot(fig)
         elif visualization == "Guided Backpropagation":
             with st.spinner("Generating Plot"):
@@ -102,8 +100,8 @@ def app(model = torchvision.models.resnet18().eval(), in_dist_name="in", ood_dat
                 fig = plt.figure(figsize=(40,40))
                 ax = fig.add_subplot(131)
                 ax.imshow(np.asarray(saliency.squeeze().detach().numpy() ))
-                ax = fig.add_subplot(131)
-            # ax.imshow(np.asarray(x.cpu().squeeze().detach().numpy() ))
+                ax = fig.add_subplot(132)
+                ax.imshow(np.asarray(x.cpu().squeeze().permute(1,2,0).detach().numpy() ))
             st.pyplot(fig)
         elif visualization == "Gradient":
             with st.spinner("Generating Plot"):
@@ -115,8 +113,8 @@ def app(model = torchvision.models.resnet18().eval(), in_dist_name="in", ood_dat
                 fig = plt.figure(figsize=(40,40))
                 ax = fig.add_subplot(131)
                 ax.imshow(np.asarray(saliency.squeeze().detach().numpy() ))
-                ax = fig.add_subplot(131)
-            # ax.imshow(np.asarray(x.cpu().squeeze().detach().numpy() ))
+                ax = fig.add_subplot(132)
+                ax.imshow(np.asarray(x.cpu().squeeze().permute(1,2,0).detach().numpy() ))
             st.pyplot(fig)
         elif visualization == "Linear Approximation":
             with st.spinner("Generating Plot"):
@@ -128,25 +126,25 @@ def app(model = torchvision.models.resnet18().eval(), in_dist_name="in", ood_dat
                 fig = plt.figure(figsize=(40,40))
                 ax = fig.add_subplot(131)
                 ax.imshow(np.asarray(saliency.squeeze().detach().numpy() ))
-                ax = fig.add_subplot(131)
-            # ax.imshow(np.asarray(x.cpu().squeeze().detach().numpy() ))
+                ax = fig.add_subplot(132)
+                ax.imshow(np.asarray(x.cpu().squeeze().permute(1,2,0).detach().numpy() ))
             st.pyplot(fig)
         elif visualization == "Extremal Perturbation":
             with st.spinner("Generating Plot"):
                 caching.clear_cache()
-                saliency_layer=st.selectbox("Select Layer:",tuple(layers))
+                # saliency_layer=st.selectbox("Select Layer:",tuple(layers))
                 # st.number_input(label="Enter a channel number:", step=1, min_value=0, value=0)
                 _, x, category_id, _ = get_example_data()
                 masks_1, _ = extremal_perturbation(
                     model, x.cpu(), category_id,
                     reward_func=contrastive_reward,
-                    debug=True,
+                    debug=False,
                     areas=[0.12],)
                 fig = plt.figure(figsize=(40,40))
                 ax = fig.add_subplot(131)
                 ax.imshow(np.asarray(masks_1.squeeze().detach().numpy() ))
-                ax = fig.add_subplot(131)
-                # ax.imshow(np.asarray(x.cpu().squeeze().detach().numpy() ))
+                ax = fig.add_subplot(132)
+                ax.imshow(np.asarray(x.cpu().squeeze().permute(1,2,0).detach().numpy() ))
                 st.pyplot(fig)
         elif visualization == "RISE":
             with st.spinner("Generating Plot"):
@@ -159,8 +157,8 @@ def app(model = torchvision.models.resnet18().eval(), in_dist_name="in", ood_dat
                 fig = plt.figure(figsize=(40,40))
                 ax = fig.add_subplot(131)
                 ax.imshow(np.asarray(saliency.squeeze().detach().numpy() ))
-                ax = fig.add_subplot(131)
-                # ax.imshow(np.asarray(x.cpu().squeeze().detach().numpy() ))
+                ax = fig.add_subplot(132)
+                ax.imshow(np.asarray(x.cpu().squeeze().permute(1,2,0).detach().numpy() ))
                 st.pyplot(fig)
         elif visualization == "Color Distribution for Entire Dataset":
             with st.spinner("Generating Plot"):
@@ -178,7 +176,7 @@ def app(model = torchvision.models.resnet18().eval(), in_dist_name="in", ood_dat
                 _ = plt.xlabel('Intensity Value')
                 _ = plt.ylabel('Count')
                 _ = plt.legend(['Red_Channel', 'Green_Channel', 'Blue_Channel'])
-                # ax.imshow(np.asarray(x.cpu().squeeze().detach().numpy() ))
+                
                 st.pyplot(fig)
         elif visualization == "Pixel Distribution for Entire Dataset":
             with st.spinner("Generating Plot"):
@@ -199,11 +197,17 @@ def app(model = torchvision.models.resnet18().eval(), in_dist_name="in", ood_dat
             mpl.rcParams.update({'font.size': 15})
             
     if st.sidebar.button("Visualize Model"):
-        caching.clear_cache()
         saliency_layer=st.selectbox("Select Layer:",tuple(layers))
-        channel = st.number_input(label="Enter a channel number:", step=1, min_value=0, value=0)
-        obj = objectives.channel(saliency_layer, channel)
-        fig = render.render_vis(model, obj, show_inline=False)
+        filter = st.number_input(label="Enter a filter number:", step=1, min_value=1, value=1)
+        g_ascent = GradientAscent(model)
+        g_ascent.use_gpu = False
+        layer = model.conv1
+        exec("layer = model.conv1")
+        print(layer)
+        img = g_ascent.visualize(layer, filter, title=saliency_layer,return_output=True)[0][0][0]
+        fig = plt.figure(figsize=(40,40))
+        ax = fig.add_subplot(131)
+        ax.imshow(np.asarray(img.cpu().detach().numpy() ))
         st.pyplot(fig)
         
         
