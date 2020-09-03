@@ -543,10 +543,11 @@ def extremal_perturbation(model,
             x = torch.flip(x, dims=(3,))
 
         # Evaluate the model on the masked data.
-        y = model(x.squeeze(3))
+        y = torch.sigmoid(model(x.squeeze(3)))
+        y = torch.tensor([1-y.item(),y.item()])
 
         # Get reward.
-        reward = reward_func(y, target, variant=variant)
+        reward = simple_reward(y, target, variant=variant)
 
         # Reshape reward and average over spatial dimensions.
         reward = reward.reshape(len(areas), -1).mean(dim=1)
