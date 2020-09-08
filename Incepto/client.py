@@ -9,6 +9,8 @@ import os
 import torch
 import torchvision
 from torchvision.transforms import transforms
+import calMetric as m
+import calData as d
 
 class client():
     def __init__(self, model, in_distribution, out_of_distribution, data_labels, num_classes, is_image=False, transformation=None):
@@ -33,8 +35,21 @@ class client():
     def detect_ood_gram(self, model, gpu, batch_size):
         gram_metrics(model,self.data_labels[0],self.in_distribution,self.data_labels[1:], self.out_of_distribution,gpu=gpu,batch_size=batch_size)
     
-    # def attack(self, adv_type, gpu, batch_size=200, in_transform=None):
-    #     generate_adv_samples(model=self.model,net_type="model",dataset_name="mPower",dataset = self.in_distribution,gpu=gpu,adv_type=adv_type,num_classes=self.num_classes,batch_size=batch_size,in_transform=in_transform)
+    def detect_ood_odin(self, gpu, nnName="model", epsilon= 0.0014, temperature = 1000 ):
+        net1 = self.model
+        testloaderIn = torch.utils.data.DataLoader(self.in_distribution, batch_size=1,
+                                            shuffle=False, num_workers=2)
+        testloadersOut = []
+        for dataset in self.out_of_distribution:
+            testloadersOut.append(torch.utils.data.DataLoader(dataset, batch_size=1,
+                                         shuffle=False, num_workers=2))
+        net1.cuda(gpu)
+        d.testData(net1, torch.nn.CrossEntropyLoss(), gpu, testloaderIn, testloadersOut, nnName, self.data_lables[0], epsilon, temperature) 
+        m.metric(nnName, self.data_lables[0])
+        
+        
+        
+
         
            
 # files = os.listdir("../../../data3/mPower/data")
