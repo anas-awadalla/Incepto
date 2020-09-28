@@ -3,7 +3,6 @@
 # Status:
 Still In Development
 
-![Test Image 1](logo.png)
 
 What Can You Do?
 
