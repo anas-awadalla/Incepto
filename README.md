@@ -3,7 +3,6 @@
 # Status:
 Still In Development
 
-![Test Image 1](logo.png)
 
 What Can You Do?
 
@@ -23,9 +22,7 @@ new_client = client(model,dataset,ham,data_labels=["Cifar10","HAM10000"],num_cla
 new_client.analyze_data(channel_labels=["r","g","b"])
 #To Run OOD Detection:
 new_client.detect_ood(gpu=1,batch_size=64)
-#To Attack Model:
-new_client.attack("fsgm",gpu=1,batch_size=64)
-#Model Attack Dashboard:
+#Model Dashboard:
 #Coming Soon
 ```
 
