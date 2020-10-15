@@ -544,10 +544,12 @@ def extremal_perturbation(model,
 
         # Evaluate the model on the masked data.
         y = torch.sigmoid(model(x.squeeze(3)))
-        y = torch.tensor([1-y.item(),y.item()])
+        y = torch.tensor([[1,0]])
 
         # Get reward.
         reward = simple_reward(y, target, variant=variant)
+        
+        print("Reward: ",reward)
 
         # Reshape reward and average over spatial dimensions.
         reward = reward.reshape(len(areas), -1).mean(dim=1)
@@ -555,7 +557,8 @@ def extremal_perturbation(model,
         # Area regularization.
         mask_sorted = mask.reshape(len(areas), -1).sort(dim=1)[0]
         regul = - ((mask_sorted - reference)**2).mean(dim=1) * regul_weight
-        energy = (reward + regul).sum()
+        energy = (reward.cpu() + regul.cpu()).sum()
+        print("Energy: ",energy)
 
         # Gradient step.
         optimizer.zero_grad()
