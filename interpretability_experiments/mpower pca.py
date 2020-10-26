@@ -220,7 +220,7 @@ for i in layer_map:
 # )
 print(pca_layer_result[0])
 # %%
-%matplotlib inline
+%matplotlib widget
 from ipywidgets import interact, widgets
 
 def pca_3d(layer=2, vertical_angle = 0, horizontal_angle = 30):
@@ -248,126 +248,38 @@ def pca_3d(layer=2, vertical_angle = 0, horizontal_angle = 30):
     
 interact(pca_3d, layer=widgets.IntSlider(min=0, max=8, step=1, value=0), vertical_angle= widgets.IntSlider(min=0, max=360, step=1, value=0), horizontal_angle = widgets.IntSlider(min=0, max=360, step=1, value=30));
 
+# %%
+
+print(X.shape)
+
 
 # %%
-# N = 10000
-# df_subset = df.loc[rndperm[:N],:].copy()
-# data_subset = df_subset[feat_cols].values
-# pca = PCA(n_components=3)
-# pca_result = pca.fit_transform(data_subset)
-# df_subset['pca-one'] = pca_result[:,0]
-# df_subset['pca-two'] = pca_result[:,1] 
-# df_subset['pca-three'] = pca_result[:,2]
-# print('Explained variation per principal component: {}'.format(pca.explained_variance_ratio_))
 
-
-# # %%
-# time_start = time.time()
-# tsne = TSNE(n_components=2, verbose=1, perplexity=40, n_iter=300)
-# tsne_results = tsne.fit_transform(data_subset)
-# print('t-SNE done! Time elapsed: {} seconds'.format(time.time()-time_start))
-
-
-# # %%
-# df_subset['tsne-2d-one'] = tsne_results[:,0]
-# df_subset['tsne-2d-two'] = tsne_results[:,1]
-# plt.figure(figsize=(16,10))
-# sns.scatterplot(
-#     x="tsne-2d-one", y="tsne-2d-two",
-#     hue="y",
-#     palette=sns.color_palette("hls", 2),
-#     data=df_subset,
-#     legend="full",
-#     alpha=0.3
-# )
-
-
-# # %%
-# plt.figure(figsize=(16,7))
-# ax1 = plt.subplot(1, 2, 1)
-# sns.scatterplot(
-#     x="pca-one", y="pca-two",
-#     hue="y",
-#     palette=sns.color_palette("hls", 2),
-#     data=df_subset,
-#     legend="full",
-#     alpha=0.3,
-#     ax=ax1
-# )
-# ax2 = plt.subplot(1, 2, 2)
-# sns.scatterplot(
-#     x="tsne-2d-one", y="tsne-2d-two",
-#     hue="y",
-#     palette=sns.color_palette("hls", 2),
-#     data=df_subset,
-#     legend="full",
-#     alpha=0.3,
-#     ax=ax2
-# )
-
-
-# # %%
-# pca_50 = PCA(n_components=50)
-# pca_result_50 = pca_50.fit_transform(data_subset)
-# print('Cumulative explained variation for 50 principal components: {}'.format(np.sum(pca_50.explained_variance_ratio_)))
-
-
-# # %%
-# time_start = time.time()
-# tsne = TSNE(n_components=2, verbose=0, perplexity=40, n_iter=300)
-# tsne_pca_results = tsne.fit_transform(pca_result_50)
-# print('t-SNE done! Time elapsed: {} seconds'.format(time.time()-time_start))
-
-
-# # %%
-# df_subset['tsne-pca50-one'] = tsne_pca_results[:,0]
-# df_subset['tsne-pca50-two'] = tsne_pca_results[:,1]
-# plt.figure(figsize=(16,4))
-# ax1 = plt.subplot(1, 3, 1)
-# sns.scatterplot(
-#     x="pca-one", y="pca-two",
-#     hue="y",
-#     palette=sns.color_palette("hls", 2),
-#     data=df_subset,
-#     legend="full",
-#     alpha=0.3,
-#     ax=ax1
-# )
-# ax2 = plt.subplot(1, 3, 2)
-# sns.scatterplot(
-#     x="tsne-2d-one", y="tsne-2d-two",
-#     hue="y",
-#     palette=sns.color_palette("hls", 2),
-#     data=df_subset,
-#     legend="full",
-#     alpha=0.3,
-#     ax=ax2
-# )
-# ax3 = plt.subplot(1, 3, 3)
-# sns.scatterplot(
-#     x="tsne-pca50-one", y="tsne-pca50-two",
-#     hue="y",
-#     palette=sns.color_palette("hls", 2),
-#     data=df_subset,
-#     legend="full",
-#     alpha=0.3,
-#     ax=ax3
-# )
-
-
-# # %%
-# from torch.utils.tensorboard import SummaryWriter
-# writer = SummaryWriter()
-# writer.add_figure("pca-one and pca-two",ax1)
-# writer.add_figure("tsne-2d",ax2)
-# writer.add_figure("tsne-pca50",ax3)
-
-
-# # %%
-# get_ipython().system('tensorboard --logdir=runs')
-
-
-# # %%
+import plotly
+import plotly.graph_objs as go
+import plotly.express as px
 
 
 
+def pca_ploty_3d(layer):
+    # Configure Plotly to be rendered inline in the notebook.
+    plotly.offline.init_notebook_mode()
+    
+    df = pd.DataFrame({'x':np.asarray(pca_layer_result[layer][0]),'y':np.asarray(pca_layer_result[layer][1]),'z':np.asarray(pca_layer_result[layer][2]),'label':y}) 
+
+    # Configure the trace.
+    trace = px.scatter_3d(df,
+        x='x', 
+        y='y',  
+        z='z', 
+        color= 'label',
+        
+    )
+    
+    trace.show()
+
+interact(pca_ploty_3d, layer=widgets.IntSlider(min=0, max=8, step=1, value=0));
+
+
+
+# %%
