@@ -12,17 +12,26 @@ class IllegalDataDimensionException(Exception):
     pass
 
 
-"""
-"""
-
-
 class SignalInterpreter(object):
-    """
+    """Summary of class here.
 
-    """
+        Longer class information....
+        Longer class information....
+
+        Attributes:
+            likes_spam: A boolean indicating if we like SPAM or not.
+            eggs: An integer count of the eggs we have laid.
+        """
 
     def __init__(self, model, dataset, gpu, channel_labels):
+        """
 
+        Args:
+            model:
+            dataset:
+            gpu:
+            channel_labels:
+        """
         data_loader = DataLoader(dataset, batch_size=len(dataset))
         itr = iter(data_loader)
         self.X, self.y = next(itr)
@@ -77,25 +86,46 @@ class SignalInterpreter(object):
 
         print("Generation Complete")
 
-    """
-    """
     def interpret_signal(self, signal):
+        """
+
+        Args:
+            signal:
+
+        Returns:
+
+        """
         reduced_signal = self.pca.transform(signal.unsequeeze(0).detach.numpy())
         example_index = self.__closest_point(reduced_signal)
         example_signal = self.X[example_index]
         return self.__plot_signals([signal, example_signal], self.channel_labels)
 
-    """
-    """
     def __closest_point(self, point, points):
+        """
+
+        Args:
+            point:
+            points:
+
+        Returns:
+
+        """
         points = np.asarray(points)
         deltas = points - point
         dist_2 = np.einsum('ij,ij->i', deltas, deltas)
         return np.argmin(dist_2)
 
-    """
-    """
     def __plot_signals(self, signals, channel_labels):
+        """
+
+        Args:
+            signals:
+            channel_labels:
+
+        Returns:
+            object:
+
+        """
         colors = list(CSS4_COLORS.keys())
         i = 0
         fig = plt.figure(figsize=(40, 40))

@@ -9,7 +9,7 @@ Original file is located at
 
 # Commented out IPython magic to ensure Python compatibility.
 # %%bash
-# !(stat -t /usr/local/lib/*/dist-packages/google/colab > /dev/null 2>&1) && exit 
+# !(stat -t /usr/local/lib/*/dist-packages/google/colab > /dev/null 2>&1) && exit
 # pip install ninja 2>> install.log
 # git clone https://github.com/SIDN-IAP/global-model-repr.git tutorial_code 2>> install.log
 
@@ -48,8 +48,8 @@ transform=transforms.Compose([
 
 from matplotlib.pyplot import imshow
 from PIL import Image
-image_path = "/content/nose.jpg" #@param {type: "string"}
-ood_img = Image.open(image_path) 
+image_path = "/content/2-original.jpg" #@param {type: "string"}
+ood_img = Image.open(image_path)
 
 ood_tensor_img = transform(ood_img)
 
@@ -60,7 +60,7 @@ print("Output: ", torch.argmax(output).item())
 imshow(ood_img)
 
 # counter to keep count of the conv layers
-counter = 0 
+counter = 0
 modules = {}
 for top,module in model.features.named_children():
     for block,m1 in module.named_children():
@@ -68,10 +68,10 @@ for top,module in model.features.named_children():
         if type(m) == nn.Conv2d:
             modules.update({"features."+top+"."+block+"."+layer:m})
             counter += 1
-          
+
 print(f"Total convolutional layers: {counter}")
 
-from operator import itemgetter  
+from operator import itemgetter
 
 def get_topk_units(model, k, input):
   activations = {}
@@ -86,7 +86,7 @@ def get_topk_units(model, k, input):
   results = []
   for (key, value), top in zip(sorted(activations.items(), key = itemgetter(1), reverse = True),range(5)):
         results.append((key, value))
-        
+
 
   return results
 
@@ -119,7 +119,7 @@ lesion_type_dict = {
     'df': 'Dermatofibroma'
 }
 
-data['cell_type'] = data['dx'].map(lesion_type_dict.get) 
+data['cell_type'] = data['dx'].map(lesion_type_dict.get)
 data['cell_type_idx'] = pd.Categorical(data['cell_type']).codes
 
 data[['cell_type_idx', 'cell_type']].sort_values('cell_type_idx').drop_duplicates()
