@@ -23,7 +23,7 @@ class SignalInterpreter(object):
             eggs: An integer count of the eggs we have laid.
         """
 
-    def __init__(self, model, dataset, gpu, channel_labels):
+    def __init__(self, model, X, y, gpu, channel_labels):
         """
 
         Args:
@@ -35,6 +35,9 @@ class SignalInterpreter(object):
         data_loader = DataLoader(dataset, batch_size=len(dataset))
         itr = iter(data_loader)
         self.X, self.y = next(itr)
+        
+        
+        self.model = model.eval()
 
         if len(self.X.shape) != 3:
             raise IllegalDataDimensionException("Expected data to have dimensions 3 but got dimension ",
@@ -46,29 +49,31 @@ class SignalInterpreter(object):
 
         self.channel_labels = channel_labels
 
-        if gpu == "-1":
-            device = torch.device('cpu')
+        if gpu == -1:
+            self.device = torch.device('cpu')
         else:
-            device = torch.device('cuda:' + str(gpu))
+            self.device = torch.device('cuda:' + str(gpu))
+            
+        model.to(self.device)
 
         counter = 0
-        modules = {}
+        self.modules = {}
         for top, module in model.named_children():
             if type(module) == torch.nn.Sequential:
-                modules.update({"" + top: module})
+                self.modules.update({"" + top: module})
                 counter += 1
 
         print(f"Total Interpretable layers: {counter}")
 
-        self.X.to(device)
+        self.X.to(self.device)
 
         layer_map = {0: self.X.flatten(start_dim=1)}
         index = 1
         output = self.X
 
-        for i in modules:
-            layer = modules[i]
-            layer.eval().cpu()
+        for i in self.modules:
+            layer = self.modules[i]
+            layer.eval().to(self.device)
             output = layer(output)
             layer_map.update({index: output.flatten(start_dim=1)})
             index += 1
@@ -80,10 +85,10 @@ class SignalInterpreter(object):
         self.pca_layer_result = []
 
         self.pca = PCA(n_components=3)
-        pca_result = self.pca.fit_transform(layer_map[len(layer_map) - 1].detach().numpy())
-        for i in pca_result[0]:
-            self.pca_layer_result.append(pca_result[:, i])
-
+        self.pca_result = self.pca.fit_transform(layer_map[len(layer_map) - 1].detach().numpy())
+        for i in range(len(channel_labels)):
+            self.pca_layer_result.append(self.pca_result[:,i])
+        
         print("Generation Complete")
 
     def interpret_signal(self, signal):
@@ -95,12 +100,22 @@ class SignalInterpreter(object):
         Returns:
 
         """
-        reduced_signal = self.pca.transform(signal.unsequeeze(0).detach.numpy())
+        
+        output = signal.unsqueeze(0).to(self.device)
+
+        for i in self.modules:
+            layer = self.modules[i]
+            layer.eval().to(self.device)
+            output = layer(output)
+            
+        output = torch.flatten(output,start_dim=1)
+        
+        reduced_signal = self.pca.transform(output.detach())
         example_index = self.__closest_point(reduced_signal)
         example_signal = self.X[example_index]
-        return self.__plot_signals([signal, example_signal], self.channel_labels)
+        return self.__plot_signals([signal, example_signal], int(torch.round(torch.sigmoid(self.model(signal.unsqueeze(0).to(self.device)))).item()), self.y[example_index].item(), self.channel_labels)
 
-    def __closest_point(self, point, points):
+    def __closest_point(self, point):
         """
 
         Args:
@@ -110,12 +125,12 @@ class SignalInterpreter(object):
         Returns:
 
         """
-        points = np.asarray(points)
+        points = np.asarray(self.pca_result)
         deltas = points - point
         dist_2 = np.einsum('ij,ij->i', deltas, deltas)
         return np.argmin(dist_2)
 
-    def __plot_signals(self, signals, channel_labels):
+    def __plot_signals(self, signals, output_test, output_training, channel_labels):
         """
 
         Args:
@@ -133,16 +148,18 @@ class SignalInterpreter(object):
         i += 1
 
         color_index = 0
-        ax.set_title("Interpreted Signal")
+        ax.set_title("Interpreted Signal with Output Class "+str(output_test))
         for channel, label in zip(signals[0], channel_labels):
             ax.plot(channel, color=colors[color_index + 20], label=label)
             color_index += 1
+            
+        plt.legend()
 
         ax = fig.add_subplot(4, 4, i + 1)
         i += 1
 
         color_index = 0
-        ax.set_title("Example Signal")
+        ax.set_title("Example Signal with Output Class "+str(output_training))
         for channel, label in zip(signals[1], channel_labels):
             ax.plot(channel, color=colors[color_index + 20], label=label)
             color_index += 1
