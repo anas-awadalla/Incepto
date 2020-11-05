@@ -328,3 +328,6 @@ class data(Dataset):
     # %%
     testloader = torch.utils.data.DataLoader(data(), batch_size=1,shuffle=True)
     
+    # %%
+    
+    
