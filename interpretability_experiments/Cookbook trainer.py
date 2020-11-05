@@ -180,9 +180,9 @@ class NearestEmbedFunc(Function):
             emb_expanded = emb
 
         # find nearest neighbors
-        dist = torch.norm(x_expanded.cpu() - emb_expanded.cpu(), 2, 1)
+        dist = torch.norm(x_expanded - emb_expanded, 2, 1)
         _, argmin = dist.min(-1)
-        argmin = argmin.cuda() # device here
+        # argmin = argmin.cuda() # device here
         shifted_shape = [input.shape[0], *list(input.shape[2:]) ,input.shape[1]]
         result = emb.t().index_select(0, argmin.view(-1)).view(shifted_shape).permute(0, ctx.dims[-1], *ctx.dims[1:-1])
 
@@ -231,17 +231,58 @@ class multiCookbook(nn.Module):
         super(multiCookbook, self).__init__()
 
         self.cookbook1 = NearestEmbed(k,dim)
+        
+        
         self.cookbook2 = NearestEmbed(k,dim)
+        
+        
         self.cookbook3 = NearestEmbed(k,dim)
         
-    def forward(self, x):
-        a, _ = self.cookbook1(x[:,0])
-        b, _ = self.cookbook2(x[:,1])
-        c, _ = self.cookbook3(x[:,2])
         
-        result = torch.transpose(torch.cat([a.unsqueeze(0), b.unsqueeze(0), c.unsqueeze(0)], dim=0),0,1)
+    def forward(self, x):
+        
+        # z_q, _ = self.emb(z_e, weight_sg=True).view(-1, self.hidden)
+        # emb, _ = self.emb(z_e.detach()).view(-1, self.hidden)
+
+        # a_e = torch.cat([self.cookbook1(x[:,0][:,0:1000].detach())[0],self.cookbook1(x[:,0][:,1000:2000].detach())[0]
+        #                ,self.cookbook1(x[:,0][:,2000:3000].detach())[0],self.cookbook1(x[:,0][:,3000:4000].detach())[0]]
+        #               , dim=1)
+        # b_e = torch.cat([self.cookbook2(x[:,1][:,0:1000].detach())[0],self.cookbook2(x[:,1][:,1000:2000].detach())[0]
+        #                ,self.cookbook2(x[:,1][:,2000:3000].detach())[0],self.cookbook2(x[:,1][:,3000:4000].detach())[0]]
+        #               , dim=1)
+        # c_e = torch.cat([self.cookbook3(x[:,2][:,0:1000].detach())[0],self.cookbook3(x[:,2][:,1000:2000].detach())[0],self.cookbook3(x[:,2][:,2000:3000].detach())[0]
+        #                ,self.cookbook3(x[:,2][:,3000:4000].detach())[0]]
+        #               , dim=1)
+        
+        a_e,_ = self.cookbook1(x[:,0].detach())
+        b_e,_ = self.cookbook2(x[:,1].detach())
+        c_e,_ = self.cookbook3(x[:,2].detach())
+
+        
+        emb = torch.transpose(torch.cat([a_e.unsqueeze(0), b_e.unsqueeze(0), c_e.unsqueeze(0)], dim=0),0,1)
+              
+        # a_q = torch.cat([self.cookbook1.forward(x[:,0][:,0:1000],weight_sg=True)[0],self.cookbook1.forward(x[:,0][:,1000:2000],weight_sg=True)[0], self.cookbook1.forward(x[:,0][:,2000:3000],weight_sg=True)[0]
+        #                ,self.cookbook1.forward(x[:,0][:,3000:4000],weight_sg=True)[0]]
+        #               , dim=1)
+        # b_q = torch.cat([self.cookbook2.forward(x[:,1][:,0:1000],weight_sg=True)[0],self.cookbook2.forward(x[:,1][:,1000:2000],weight_sg=True)[0], self.cookbook2.forward(x[:,1][:,2000:3000],weight_sg=True)[0]
+        #                ,self.cookbook2.forward(x[:,1][:,3000:4000],weight_sg=True)[0]]
+        #               , dim=1)
+        # c_q = torch.cat([self.cookbook3.forward(x[:,2][:,0:1000],weight_sg=True)[0],self.cookbook3.forward(x[:,2][:,1000:2000],weight_sg=True)[0], self.cookbook3.forward(x[:,2][:,2000:3000],weight_sg=True)[0]
+        #                ,self.cookbook3.forward(x[:,2][:,3000:4000],weight_sg=True)[0]]
+        #               , dim=1)
+        
+        a_q,_ = self.cookbook1.forward(x[:,0],weight_sg=True)
+        b_q,_ = self.cookbook2.forward(x[:,1],weight_sg=True)
+        c_q,_ = self.cookbook3.forward(x[:,2],weight_sg=True)
+
+
+        
+        z_q = torch.transpose(torch.cat([a_q.unsqueeze(0), b_q.unsqueeze(0), c_q.unsqueeze(0)], dim=0),0,1)      
                 
-        return result
+        # # z_q, _ = emb(z_e, weight_sg=True).view(-1, 4000)
+        # emb, _ = emb(z_e.detach()).view(-1, 4000)        
+        
+        return z_q, emb
         
 # %%
 from parkinsonsNet import Network
@@ -260,16 +301,24 @@ class quantizedModel(nn.Module):
         #         counter+=1
         
         # print(f"Total convolutional layers: {counter}")
+        self.cookbook = NearestEmbed(20,4000)
         
-        self.cookbook = multiCookbook(20,4000)
+        
+
+        # self.cookbook = multiCookbook(20,4000)
 
     def forward(self, x):
-        output = self.cookbook(x)
+        emb = self.cookbook(torch.sum(x,dim=1).detach())
+        z_q = self.cookbook.forward(torch.sum(x,dim=1),weight_sg=True)
+        
+        output = z_q
+        
         for top, module in self.classifier.named_children():
             if type(module) == torch.nn.Sequential:
+                module = module.cpu()
                 output = module(output)
             
-        return output
+        return z_q, emb, output
     
 # %%
 counter = 0
@@ -296,6 +345,17 @@ features = []
 #             output = layer(output)
             
 #         features.append(output)
+# %%
+def loss_function(x, recon_x, z_e, emb):
+        vq_coef=0.2
+        comit_coef=0.4
+        
+        ce_loss = F.cosine_embedding_loss(recon_x, x,torch.tensor(0.5))
+        vq_loss = F.mse_loss(emb, z_e.detach())
+        commit_loss = F.mse_loss(z_e, emb.detach())
+
+        return  ce_loss + vq_coef*vq_loss + comit_coef*commit_loss
+
 
 # %%
 qmodel = quantizedModel()
@@ -304,50 +364,90 @@ qmodel = quantizedModel()
 for param in qmodel.classifier.parameters():
     param.requires_grad = False
     
-optimizer = torch.optim.Adam(qmodel.cookbook.parameters(),lr=1e-3)
-loss = torch.nn.BCEWithLogitsLoss()
+optimizer = torch.optim.Adam(qmodel.cookbook.parameters(),lr=1e-4)
+# loss = torch.nn.CrossEntropyLoss()
+# loss = torch.nn.CosineEmbeddingLoss()
 scheduler = torch.optim.lr_scheduler.StepLR(optimizer,
-                                             step_size=7, gamma=0.2)
+                                             step_size=5, gamma=0.5)
+
+# dissimilar = torch.tensor(-1).cuda()
 
 # %%
 from tqdm.notebook import tqdm
 
-qmodel = qmodel.train().cuda()
+qmodel = qmodel.train()#.cuda()
 
 
-for epoch in range(50):
-    # scheduler.step()
-    running_loss = 0.0
+for epoch in range(100):
+    scheduler.step()
+    
+    running_feature_loss = 0.0
+    running_wave_loss = 0.0
+    
     for i,batch in tqdm(enumerate(dataloader)):
         optimizer.zero_grad()
 
         X = batch["data"]
         y = batch["result"]
         
-        X = torch.FloatTensor(X.float()).cuda()
+        X = torch.FloatTensor(X.float())
         
         normal_output = X
         for l in modules:
-            layer = modules[l]
-            layer.eval().cuda()
+            layer = modules[l].cpu()
+            # layer.eval()
             normal_output = layer(normal_output)
             
-                
-        output = loss(qmodel(X), normal_output)
-        running_loss += output
+        normal_output = Variable(normal_output, requires_grad=False)
+                        
+        z_q, emb, result = qmodel(X)
         
-        output.backward()
+        
+        feature_loss = loss_function(normal_output,result,X,emb)
+            
+                
+        # feature_loss = loss(result, normal_output,dissimilar)
+        
+        # wave_loss = loss(X,wave,dissimilar)
+        
+        running_feature_loss += feature_loss
+        # running_wave_loss += wave_loss
+        
+        total_loss = feature_loss#+wave_loss
+        
+        total_loss.backward()
         
         optimizer.step()
+    # print(normal_output)
+    # print(result)
         
     print("Epoch "+str(epoch))
-    print("Total Loss: ",str(running_loss.item()))
+    print("Total Feature Loss: ",str(running_feature_loss.item()))
+    # print("Total Wave Loss: ",str(running_wave_loss.item()))
         
         
         
 
 # %%
-for i in qmodel.parameters():
-    print(i.requires_grad)
+print(X[0][1])
+print(qmodel.cookbook.cookbook2.weight)
+print(qmodel.cookbook.cookbook2(X[0][1][3000:].unsqueeze(0).cuda())[0])
+
+# %%
+import matplotlib.pyplot as plt
+
+plt.plot(X[0][0].cpu().detach().numpy())
+plt.show()
+
+i = qmodel.cookbook.cookbook1(X[3][0].unsqueeze(0))[0]
+plt.plot(i.cpu().detach().numpy()[0])
+plt.show()
+
+# plt.plot(X[1][2].cpu().detach().numpy())
+# plt.show()
+
+# i = qmodel.cookbook.cookbook3(X[1][2].unsqueeze(0).cuda())[0]
+# plt.plot(i.cpu().detach().numpy()[0])
+# plt.show()
 
 # %%
