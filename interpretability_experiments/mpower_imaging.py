@@ -515,8 +515,36 @@ def plot_signal_spectogram_sum(point, code):
 
 interact_manual(plot_signal_spectogram_sum,point=widgets.IntSlider(min=0, max=100, step=1, value=0), code= widgets.IntSlider(min=0, max=16, step=1, value=0));
 
-
-
-
-
 # %%
+
+### Neuron Conductance if Layer COnductance is promising
+### Run Clustering over vectors of neurons ?
+
+
+from operator import itemgetter
+from captum.attr import LayerActivation,LayerConductance, LayerGradientXActivation, NeuronConductance
+from tqdm.notebook import tqdm
+
+def get_topk_units(model, inputs, labels):
+  activations = {}
+  count = 0
+  for idx in tqdm(range(len(inputs))):
+    if(labels[idx].item()==target):
+      count+=1
+      input = inputs[idx]
+      for layer in modules:
+        attr_algo = LayerConductance(model, modules[layer])
+        attributions = attr_algo.attribute(input.unsqueeze(0).cuda()).squeeze()
+        for i, unit in enumerate(attributions.squeeze()):
+          if((layer,i) not in activations):
+            activations.update({(layer,i):sum(unit).item()})
+          else:
+            activations[(layer,i)] += sum(unit).item()
+
+
+  results = []
+  for (key, value), top in zip(sorted(activations.items(), key = itemgetter(1), reverse = True),range(50)):
+        results.append((key, value))
+        
+
+  return results
