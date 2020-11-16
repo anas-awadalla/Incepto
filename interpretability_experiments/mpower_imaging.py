@@ -134,10 +134,12 @@ print(X.shape)
 # ~~~~ Model for Feature Exraction ~~~~
 
 from parkinsonsNet import Network
-model = torch.load("/home/anasa2/pre_trained/parkinsonsNet-rest_mpower-rest.pth")
+model = torch.load("/home/anasa2/pre_trained/parkinsonsNet-rest_mpower-rest.pth",map_location='cpu')
 
+# %%
 # gpu = 0
 # device = torch.device('cuda:' + str(gpu))
+from captum.attr import LayerActivation,LayerConductance, LayerGradientXActivation, NeuronConductance
 
 device = torch.device("cpu")
 
@@ -163,6 +165,9 @@ for i in modules:
     print(output.shape)
     layer_map.update({index: output.flatten(start_dim=1)})
     index += 1
+# %%
+# attr_algo = LayerConductance(model, modules["conv8"])
+# attributions = torch.flatten(attr_algo.attribute(X[:100],attribute_to_layer_input=False),start_dim=1)
 # %%
 # ~~~~ Create Clustering Dataset ~~~~
 from sklearn.decomposition import PCA
@@ -212,26 +217,7 @@ print(codebook)
 # Use the codebook to assign each observation to a cluster via vector quantization
 labels, __ = cluster.vq.vq(dataset, codebook)
 
-
-# Check number of nodes assigned to a cluster
-# print(np.shape(cluster_one)[0])
 # %%
-# ~~~~ Visualization ~~~~
-# fig = plt.figure()
-# ax = fig.add_subplot(111, projection='3d')
-# ax.scatter(*codebook.T, c='r')
-
-# for label,c in zip(range(num_clusters),['g','b','c','m','y','b','orange','darkgreen','pink','teal']):
-#     cluster_c = dataset[labels==label]
-#     ax.scatter(*cluster_c.T, c=c, s=3)
-#     # ax.scatter(*cluster_two.T, c='g', s=3)
-# ax.set_xlabel('X Axis')
-# ax.set_ylabel('Y Axis')
-# ax.set_zlabel('Z Axis')
-# plt.show()
-
-# %%
-
 df = pd.DataFrame({'X':[],'Y':[],'Z':[],'label':[]}) 
 
 for label in zip(range(num_clusters)):
@@ -268,55 +254,6 @@ trace = px.scatter_3d(df,
     
 trace.show()
 
-# %% 
-
-################# Signal Visualizer #################
-
-# def __plot_signals(signals, output_test, output_training, channel_labels, distance):
-#         """
-
-#         Args:
-#             signals:
-#             channel_labels:
-
-#         Returns:
-#             object:
-
-#         """
-                
-#         colors = list(CSS4_COLORS.keys())
-#         i = 0
-#         fig = plt.figure(figsize=(40, 40))
-#         print(f"Distance Between Signals {distance}")
-        
-        
-#         ax = fig.add_subplot(4, 4, i + 1)
-#         i += 1
-
-#         color_index = 0
-#         ax.set_title("Interpreted Signal with Output Class "+str(output_test))
-#         for channel, label in zip(signals[0], channel_labels):
-#             ax.plot(channel, color=colors[color_index + 20], label=label)
-#             color_index += 1
-            
-#         plt.legend()
-
-#         ax = fig.add_subplot(4, 4, i + 1)
-#         i += 1
-
-#         color_index = 0
-#         ax.set_title("Example Signal with Output Class "+str(output_training))
-#         for channel, label in zip(signals[1], channel_labels):
-#             ax.plot(channel, color=colors[color_index + 20], label=label)
-#             color_index += 1
-
-#         plt.legend()
-#         plt.show()
-#         return plt
-
-
-
-
 
 # %%
 ################# Explore Codebook Summation and Centroids #################
@@ -340,6 +277,7 @@ for c in enumerate(codebook):
         # print(centroid)
 
         # print(y[centroid].item())
+        ax.set_ylim((-15,15))
 
         ax.set_title(f"Code: {code}"+ " - Label "+str(y[centroid].item()))
         
@@ -354,11 +292,11 @@ for c in enumerate(codebook):
 
 # %%
 
-### Plot Sum of Signals ###
+### Plot plot_signal_attribution_timeseries_sum of Signals ###
 
 from ipywidgets import interact_manual, widgets
 
-def plot_signal_sum(point, code):
+def plot_signal_attribution_timeseries_sum(point, code, unit):
     point = dataset[labels==code][point]
     
     color_index = 0
@@ -378,12 +316,112 @@ def plot_signal_sum(point, code):
     for channel, label in zip(torch.sum(X[centroid],dim=0).unsqueeze(0), channel_labels):
         ax.plot(channel, color=colors[2], label="Motion")
         color_index += 1
-                    
+        
     plt.legend()
 
+    input = X[centroid]
+    
+    attr_algo = LayerConductance(model, modules["conv8"])
+    attributions = attr_algo.attribute(input.unsqueeze(0).cuda(),attribute_to_layer_input=False)
+    
+    # print(attributions.shape)
 
-interact_manual(plot_signal_sum,point=widgets.IntSlider(min=0, max=500, step=1, value=0), code= widgets.IntSlider(min=0, max=10, step=1, value=0));
+    m = torch.nn.functional.upsample(attributions,size=4000, mode='linear', align_corners=True)
+    # print(m)
 
+    attributions = (m[0][unit].cpu().detach().numpy()>0.001)
+    
+    # print(attributions)
+        
+    s, e = get_window(attributions)
+    
+     
+    ax = fig.add_subplot(211)
+ 
+    ax.plot(sum(input))
+    
+    # powerSpectrum, freqenciesFound, time, imageAxis = ax.specgram(torch.sum(X[centroid],dim=0))
+
+    # ax.set_xlabel('Time')
+
+    # ax.set_ylabel('Frequency')
+    
+    rect = Rectangle((s, -30), e-s, 60, color ='red') 
+    
+    ax.add_patch(rect)
+       
+    # plt.ylim((-15,15))
+   
+    plt.show()
+                
+
+interact_manual(plot_signal_attribution_timeseries_sum,point=widgets.IntSlider(min=0, max=500, step=1, value=0), code= widgets.IntSlider(min=0, max=10, step=1, value=0), unit= widgets.IntSlider(min=0, max=255, step=1, value=0));
+
+# %%
+### Plot plot_signal_attribution_spec_sum of Signals ###
+
+from ipywidgets import interact_manual, widgets
+
+def plot_signal_attribution_spec_sum(point, code, unit):
+    point = dataset[labels==code][point]
+    
+    color_index = 0
+    colors = list({'r','g','b'})
+    fig = plt.figure(figsize=(40, 40))
+    ax = fig.add_subplot(8, 8, i + 1)
+                    
+    points = np.asarray(pca_result)
+    deltas = points - point
+    dist_2 = np.einsum('ij,ij->i', deltas, deltas)
+    centroid = np.argmin(dist_2)
+            
+    print(y[centroid].item())
+
+    ax.set_title(f"Code: {code}"+ " - Label "+str(y[centroid].item()))
+
+    for channel, label in zip(torch.sum(X[centroid],dim=0).unsqueeze(0), channel_labels):
+        ax.plot(channel, color=colors[2], label="Motion")
+        color_index += 1
+        
+    plt.legend()
+
+    input = X[centroid]
+    
+    attr_algo = LayerConductance(model, modules["conv8"])
+    attributions = attr_algo.attribute(input.unsqueeze(0).cuda(),attribute_to_layer_input=False)
+    
+    # print(attributions.shape)
+
+    m = torch.nn.functional.upsample(attributions,size=4000, mode='linear', align_corners=True)
+    # print(m)
+
+    attributions = (m[0][unit].cpu().detach().numpy()>0.001)
+    
+    # print(attributions)
+        
+    s, e = get_window(attributions)
+    
+     
+    ax = fig.add_subplot(211)
+ 
+    # ax.plot(sum(input))
+    
+    powerSpectrum, freqenciesFound, time, imageAxis = ax.specgram(torch.sum(X[centroid],dim=0))
+
+    ax.set_xlabel('Time')
+
+    ax.set_ylabel('Frequency')
+    
+    rect = Rectangle((s, -30), e-s, 60, color ='red',fc=(1,0,0,0.2), ec=(0,0,0,1)) 
+    
+    ax.add_patch(rect)
+       
+    # plt.ylim((-15,15))
+   
+    plt.show()
+                
+
+interact_manual(plot_signal_attribution_spec_sum,point=widgets.IntSlider(min=0, max=500, step=1, value=0), code= widgets.IntSlider(min=0, max=10, step=1, value=0), unit= widgets.IntSlider(min=0, max=255, step=1, value=0));
 
 # %%
 ################# Explore Codebook Mean and Centroids #################
@@ -408,7 +446,8 @@ for c in enumerate(codebook):
         # print(y[centroid].item())
 
         ax.set_title(f"Code: {code}"+ " - Label "+str(y[centroid].item()))
-        
+        ax.set_ylim((-15,15))
+
         # print(torch.sum(X[centroid],dim=0).shape)
 
         for channel, label in zip(torch.mean(X[centroid],dim=0).unsqueeze(0), channel_labels):
@@ -439,6 +478,7 @@ def plot_signal_mean(point, code):
     print(y[centroid].item())
 
     ax.set_title(f"Code: {code}"+ " - Label "+str(y[centroid].item()))
+    ax.set_ylim((-15,15))
 
     for channel, label in zip(torch.mean(X[centroid],dim=0).unsqueeze(0), channel_labels):
         ax.plot(channel, color=colors[color_index], label=label)
@@ -447,7 +487,7 @@ def plot_signal_mean(point, code):
     plt.legend()
 
 
-interact_manual(plot_signal_mean,point=widgets.IntSlider(min=0, max=100, step=1, value=0), code= widgets.IntSlider(min=0, max=10, step=1, value=0));
+interact_manual(plot_signal_mean,point=widgets.IntSlider(min=0, max=100, step=1, value=0), code= widgets.IntSlider(min=0, max=num_clusters-1, step=1, value=0));
 
 
 
@@ -479,7 +519,6 @@ for c in enumerate(codebook):
         
 
         powerSpectrum, freqenciesFound, time, imageAxis = ax.specgram(torch.sum(X[centroid],dim=0),250)
-
         ax.set_xlabel('Time')
 
         ax.set_ylabel('Frequency')
@@ -513,38 +552,162 @@ def plot_signal_spectogram_sum(point, code):
     ax.set_ylabel('Frequency')
 
 
-interact_manual(plot_signal_spectogram_sum,point=widgets.IntSlider(min=0, max=100, step=1, value=0), code= widgets.IntSlider(min=0, max=16, step=1, value=0));
+interact_manual(plot_signal_spectogram_sum,point=widgets.IntSlider(min=0, max=100, step=1, value=0), code= widgets.IntSlider(min=0, max=num_clusters-1, step=1, value=0));
 
 # %%
+print(modules.keys())
 
-### Neuron Conductance if Layer COnductance is promising
+# %%
+def get_window(arr):
+    start_index = -1
+    end_index = 0
+    index = 0
+    while index < len(arr):
+        if arr[index] and start_index==-1:
+            start_index = index
+        
+        if arr[index]:
+            end_index = index
+            
+        index+=1
+        
+    return start_index, end_index
+    
+# %%
+
+### Neuron Conductance if Layer Conductance is promising
 ### Run Clustering over vectors of neurons ?
-
 
 from operator import itemgetter
 from captum.attr import LayerActivation,LayerConductance, LayerGradientXActivation, NeuronConductance
 from tqdm.notebook import tqdm
-
-def get_topk_units(model, inputs, labels):
-  activations = {}
-  count = 0
-  for idx in tqdm(range(len(inputs))):
-    if(labels[idx].item()==target):
-      count+=1
-      input = inputs[idx]
-      for layer in modules:
-        attr_algo = LayerConductance(model, modules[layer])
-        attributions = attr_algo.attribute(input.unsqueeze(0).cuda()).squeeze()
-        for i, unit in enumerate(attributions.squeeze()):
-          if((layer,i) not in activations):
-            activations.update({(layer,i):sum(unit).item()})
-          else:
-            activations[(layer,i)] += sum(unit).item()
+from matplotlib.patches import Rectangle 
 
 
-  results = []
-  for (key, value), top in zip(sorted(activations.items(), key = itemgetter(1), reverse = True),range(50)):
-        results.append((key, value))
+model = model.cuda()
+
+activations = {}
+count = 0
+attribution_algos = []
+
+for layer in modules:
+    attribution_algos.append(LayerConductance(model, modules[layer]))
+  
+# for idx in tqdm(range(len(X))):
+#     count+=1
+#     input = X[idx]
+        
+#     attributions = attr_algo.attribute(input.unsqueeze(0).cuda(),attribute_to_layer_input=True)
+#     print(attributions[0].shape)
+
+fig = plt.figure()
+
+for attr_algo in attribution_algos:
+    input = X[100]
+    attributions = attr_algo.attribute(input.unsqueeze(0).cuda(),attribute_to_layer_input=True)
+    attributions = (sum(attributions[0][0]).unsqueeze(0).cpu().detach().numpy()>0.75)
+    
+    
+    # ax = sns.heatmap(attributions)
+    
+    s, e = get_window(attributions[0])
+     
+    ax = fig.add_subplot(111)
+ 
+    ax.plot(torch.sum(input,dim=0))
+    
+    rect = Rectangle((s, -30), e-s, 60, color ='yellow') 
+    
+    ax.add_patch(rect)
+       
+    plt.ylim((-15,15))
+   
+    plt.show()
+    break
+
+
+
+ # %%
+# import torch.nn.utils.prune as prune
+
+# for name, module in model.named_modules():
+#     # prune 20% of connections in all 1D-conv layers
+#     if isinstance(module, torch.nn.Conv1d):
+#             prune.l1_unstructured(module, name='weight', amount=0.5)
+#     elif isinstance(module, torch.nn.Sequential):
+#         for layer in module:
+#             if isinstance(module, torch.nn.Conv1d):
+#                 prune.l1_unstructured(module, name='weight', amount=0.5)
+
+# # %%
+# bit_mask = dict(model.named_buffers())['conv8.0.weight_mask']  # to verify that all masks exist
+
+# print(bit_mask.shape)
+
+
+# %%
+# model = model.cuda()
+class neuron:
+    def __init__(self,signal,activations):
+        self.signal = signal
+        self.activations = activations
+        
+    def __lt__(self, other):
+        return torch.sum(self.activations,dim=0) < torch.sum(other.activations,dim=0)
+
+import heapq
+from collections import defaultdict
+### Maximum Activations ###
+d = defaultdict(list)
+attr_algo = LayerActivation(model, modules["conv8"])
+
+for signal in tqdm(X):
+    # Get neuron activation
+    attributions = attr_algo.attribute(signal.unsqueeze(0).cuda(),attribute_to_layer_input=False)
+    # print(attributions.shape)
+    for i, act in enumerate(attributions[0]):
+        heapq.heappush(d[i],neuron(signal,act))
+        if len(d[i]) > 5:
+            d[i].pop(-1)
+    
+
+
+# %%
+from ipywidgets import interact_manual, widgets
+
+def get_top_activations_spectogram_for_unit(channel):
+    # for u in d[]:
+    place = 1
+        # plt.figure(place)
+    # if len(d[u]) > 0:
+    for i in d[channel]:
+        ax = plt.subplot(5,5,place)
+        powerSpectrum, freqenciesFound, time, imageAxis = ax.specgram(torch.mean(i.signal,dim=0))
+                # title = "Map "+u+ " Unit "+i
+                # ax.set_title(title)
+                # ax.plot(torch.sum(i.signal,dim=0))
+        place += 1
+        plt.show()
         
 
-  return results
+interact_manual(get_top_activations_spectogram_for_unit,channel = widgets.IntSlider(min=1, max=256, step=1, value=1))
+# %%
+from ipywidgets import interact_manual, widgets
+
+def get_top_activations_timeseries_for_unit(channel):
+    # for u in d[]:
+    place = 1
+        # plt.figure(place)
+    # if len(d[u]) > 0:
+    for i in d[channel]:
+        ax = plt.subplot(5,5,place)
+        ax.plot(torch.mean(i.signal,dim=0))
+                # title = "Map "+u+ " Unit "+i
+                # ax.set_title(title)
+                # ax.plot(torch.sum(i.signal,dim=0))
+        place += 1
+        plt.show()
+        
+interact_manual(get_top_activations_timeseries_for_unit,channel = widgets.IntSlider(min=1, max=256, step=1, value=1))
+
+# %%
