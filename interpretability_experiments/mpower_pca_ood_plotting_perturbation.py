@@ -160,9 +160,9 @@ output = X.to(device)
 
 for i in modules:
     layer = modules[i]
-    layer.eval().to(device)
+    layer.eval()#.to(device)
     output = layer(output)
-    print(output.shape)
+    # print(output.shape)
     layer_map.update({index: output.flatten(start_dim=1)})
     index += 1
 # %%
@@ -211,8 +211,8 @@ from scipy import cluster, signal
 
 codebook = kmeans.cluster_centers_
 
-print("Centroids:")
-print(codebook)
+# print("Centroids:")
+# print(codebook)
 
 # Use the codebook to assign each observation to a cluster via vector quantization
 labels, __ = cluster.vq.vq(dataset, codebook)
@@ -220,19 +220,19 @@ labels, __ = cluster.vq.vq(dataset, codebook)
 # %%
 df = pd.DataFrame({'X':[],'Y':[],'Z':[],'label':[]}) 
 
-for label in zip(range(num_clusters)):
-    new_df = [[],[],[],[]]
-    for point in dataset[labels==label]:
-        new_df[0].append(point[0])
-        new_df[1].append(point[1])
-        new_df[2].append(point[2])
-        new_df[3].append(0)
+# for label in zip(range(num_clusters)):
+new_df = [[],[],[],[]]
+for index in range(len(dataset)):
+    point = dataset[index]
+    new_df[0].append(point[0])
+    new_df[1].append(point[1])
+    new_df[2].append(point[2])
+    new_df[3].append(y[index].item())
         
-    df = pd.concat([df,pd.DataFrame({'X':new_df[0],'Y':new_df[1],'Z':new_df[2],'label':new_df[3]})] 
-)
+df = pd.concat([df,pd.DataFrame({'X':new_df[0],'Y':new_df[1],'Z':new_df[2],'label':new_df[3]})])
     
 # %%
-print(df)
+# print(df)
     
 # %%
 import plotly
@@ -254,8 +254,6 @@ trace = px.scatter_3d(df,
     
 trace.show()
 
-# %%
-print(codebook)
 
 # %%
 ################# Explore Codebook Summation and Centroids #################
@@ -391,6 +389,8 @@ def analyze_ood(signal, range):
     
     ##
     
+    print("Out of Distribution Signal Prediction: ",torch.round(model(signal.unsqueeze(0)).item()))
+    
     ax = fig.add_subplot(411)
     # print(signal)
     signal = torch.abs(torch.sum(signal, dim =0))
@@ -402,7 +402,7 @@ def analyze_ood(signal, range):
 
     ax.set_ylabel('Motion')
     
-    rect = Rectangle((x1, 0), y1, 20, color ='red',fc=(1,0,0,0.2), ec=(0,0,0,1)) 
+    rect = Rectangle((x1, 0), y1-x1, 20, color ='red',fc=(1,0,0,0.2), ec=(0,0,0,1)) 
     plt.ylim((0,20))
 
     ax.add_patch(rect)
@@ -410,6 +410,8 @@ def analyze_ood(signal, range):
     plt.show()
     
     ##
+    print("Closest Signal Prediction: ",torch.round(model(X[close].unsqueeze(0)).item()))
+
     fig = plt.figure(figsize=(40, 40))
 
     ax = fig.add_subplot(411)
@@ -421,7 +423,7 @@ def analyze_ood(signal, range):
 
     ax.set_ylabel('Motion')
     
-    rect = Rectangle((x2, 0), y2, 20, color ='red',fc=(1,0,0,0.2), ec=(0,0,0,1)) 
+    rect = Rectangle((x2, 0), y2-x2, 20, color ='red',fc=(1,0,0,0.2), ec=(0,0,0,1)) 
     plt.ylim((0,20))
 
     ax.add_patch(rect)
@@ -432,8 +434,7 @@ def analyze_ood(signal, range):
     
 # %%
 
-
-analyze_ood(torch.FloatTensor(np.random.rand(3,4000)), 100)   
+analyze_ood(X[10]*X[200]*X[30], 500)   
 
 
 # %%
