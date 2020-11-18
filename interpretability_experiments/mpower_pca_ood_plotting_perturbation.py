@@ -389,7 +389,7 @@ def analyze_ood(signal, range):
     
     ##
     
-    print("Out of Distribution Signal Prediction: ",torch.round(model(signal.unsqueeze(0)).item()))
+    print("Out of Distribution Signal Prediction: ",torch.round(model(signal.unsqueeze(0))).item())
     
     ax = fig.add_subplot(411)
     # print(signal)
@@ -410,7 +410,7 @@ def analyze_ood(signal, range):
     plt.show()
     
     ##
-    print("Closest Signal Prediction: ",torch.round(model(X[close].unsqueeze(0)).item()))
+    print("Closest Signal Prediction: ",torch.round(model(X[close].unsqueeze(0))).item())
 
     fig = plt.figure(figsize=(40, 40))
 
