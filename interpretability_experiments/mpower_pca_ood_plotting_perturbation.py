@@ -175,6 +175,7 @@ from sklearn.decomposition import PCA
 dataset = layer_map[len(layer_map)-1].cpu().detach().numpy()
 pca = PCA(n_components=3)
 pca_result = pca.fit_transform(dataset)
+points = np.asarray(pca_result)
 dataset = pca_result
 #%%
 from sklearn.cluster import KMeans
@@ -231,64 +232,6 @@ for index in range(len(dataset)):
         
 df = pd.concat([df,pd.DataFrame({'X':new_df[0],'Y':new_df[1],'Z':new_df[2],'label':new_df[3]})])
     
-# %%
-# print(df)
-    
-# %%
-import plotly
-import plotly.graph_objs as go
-import plotly.express as px
-from ipywidgets import interact, widgets
-
-plotly.offline.init_notebook_mode()
-    
-# Configure the trace.
-trace = px.scatter_3d(df,
-         x='X', 
-         y='Y',  
-         z='Z', 
-         color= 'label',
-        #  title="Graph for Layer "+str(layer)
-     )
-    
-    
-trace.show()
-
-
-# %%
-################# Explore Codebook Summation and Centroids #################
-
-i = 0
-channel_labels = {'x','y','z'}
-fig = plt.figure(figsize=(40, 40))
-
-for c in enumerate(codebook):
-        color_index = 0
-        colors = list({'r','g','b'})
-        ax = fig.add_subplot(8, 8, i + 1)
-                
-        points = np.asarray(pca_result)
-        deltas = points - c[1]
-        dist_2 = np.einsum('ij,ij->i', deltas, deltas)
-        centroid = np.argmin(dist_2)
-        
-        code = c[0]
-        
-        # print(centroid)
-
-        # print(y[centroid].item())
-        ax.set_ylim((-15,15))
-
-        ax.set_title(f"Code: {code}"+ " - Label "+str(y[centroid].item()))
-        
-        # print(torch.sum(X[centroid],dim=0).shape)
-
-        for channel, label in zip(torch.sum(X[centroid],dim=0).unsqueeze(0), channel_labels):
-            ax.plot(channel, color=colors[2], label="Motion")
-            color_index += 1
-                
-        plt.legend()
-        i += 1
         
 # %% 
 
@@ -379,17 +322,17 @@ def analyze_ood(signal, range):
     
     x2,y2 = purturbate(X[close],range)
     
-    # new_points = list(points.copy())
+    new_points = list(points.copy())
     
-    # new_points.pop(close)
+    new_points.pop(close)
     
-    # close_2 = closest_node(coordinates,new_points)
+    close_2 = closest_node(coordinates,new_points)
     
-    # x3,y3 = purturbate(X[close_2],250)
+    x3,y3 = purturbate(X[close_2],range)
     
     ##
     
-    print("Out of Distribution Signal Prediction: ",torch.round(model(signal.unsqueeze(0))).item())
+    print("Out of Distribution Signal Prediction: ",int(torch.round(torch.sigmoid(model(signal.unsqueeze(0)))).item()))
     
     ax = fig.add_subplot(411)
     # print(signal)
@@ -410,20 +353,20 @@ def analyze_ood(signal, range):
     plt.show()
     
     ##
-    print("Closest Signal Prediction: ",torch.round(model(X[close].unsqueeze(0))).item())
+    print("Closest Signal Prediction: ",int(torch.round(torch.sigmoid(model(X[close].unsqueeze(0)))).item()))
 
     fig = plt.figure(figsize=(40, 40))
 
     ax = fig.add_subplot(411)
 
-    close_signal = torch.abs(torch.sum(X[close], dim =0))
+    close_signal = torch.abs(torch.sum(X[close_2], dim =0))
     ax.plot(close_signal)
 
     ax.set_xlabel('Time')
 
     ax.set_ylabel('Motion')
     
-    rect = Rectangle((x2, 0), y2-x2, 20, color ='red',fc=(1,0,0,0.2), ec=(0,0,0,1)) 
+    rect = Rectangle((x3, 0), y3-x3, 20, color ='red',fc=(1,0,0,0.2), ec=(0,0,0,1)) 
     plt.ylim((0,20))
 
     ax.add_patch(rect)
@@ -434,7 +377,52 @@ def analyze_ood(signal, range):
     
 # %%
 
-analyze_ood(X[10]*X[200]*X[30], 500)   
+# analyze_ood(X[150], 250) 
+
+# # %%
+# signal = np.random.rand(3,4000)*10
+# analyze_ood(torch.FloatTensor(np.sin(signal)), 250) 
+
+
+# # %%
+# import numpy as np
+
+# volume = 0.5     # range [0.0, 1.0]
+# fs = 4000       # sampling rate, Hz, must be integer
+# duration = 1   # in seconds, may be float
+# f = 440.0        # sine frequency, Hz, may be float
+
+# # generate samples, note conversion to float32 array
+# samples = (np.sin(2*np.pi*np.arange(fs*duration)*f/fs)).astype(np.float32)
+
+
+# analyze_ood(torch.cat([torch.FloatTensor(samples).unsqueeze(0)*6,torch.FloatTensor(samples).unsqueeze(0)*0,torch.FloatTensor(samples).unsqueeze(0)], dim=0), 250) 
+
+
+# %%
+ood_dataloader = torch.load("/home/anasa2/originalParkinsonsDataloaders/val_loaderRet.pth")
+
+# %%
+
+itr = iter(ood_dataloader)
+batch = itr.next()
+X_ood = batch["data"]
+while(True):
+    try: 
+        batch = next(itr) 
+    except:
+        break 
+
+    X_ood  = torch.cat((X_ood, batch["data"]), dim=0)
+
+X_ood = torch.FloatTensor(X_ood.cpu().float())
+
+print(X_ood.shape)
+
+
+# %%
+analyze_ood(X_ood[1500], 250) 
+
 
 
 # %%
