@@ -22,11 +22,18 @@ class Attribution(object):
         
         if unit not in self.data[layer]:
             # df = {'peaks':[], 'amplitude':[]}
-            self.data[layer].update({unit:{'peaks':[], 'amplitude':[]}})
+            self.data[layer].update({unit:{'peaks':[], 'amplitude':[], "mean":[], "stdev":[], "zero_crossing":[], "skewness":[], "kurtosis":[],"entropy":[]}})
             
         # print(self.data)
         self.data[layer][unit]['peaks'].append(row['peaks'])
         self.data[layer][unit]['amplitude'].append(row['amplitude'])
+        self.data[layer][unit]['mean'].append(row['mean'])
+        self.data[layer][unit]['stdev'].append(row['stdev'])
+        self.data[layer][unit]['zero_crossing'].append(row['zero_crossing'])
+        self.data[layer][unit]['skewness'].append(row['skewness'])
+        self.data[layer][unit]['kurtosis'].append(row['kurtosis'])
+        self.data[layer][unit]['entropy'].append(row['entropy'])
+
         
     def get_important_feature(self, layer, unit):
         max_value = float("-inf")
@@ -239,7 +246,7 @@ for i in modules:
     index += 1
 
 # %%
-from mpower_layer_purpose import find_perodic, classify_frequency, get_peaks, classify_amplitude
+from mpower_layer_purpose import find_perodic, classify_frequency, get_peaks, classify_amplitude, get_spikes, classify_mean, classify_stdev,classify_zero_crossing,classify_skewness, classify_kurtosis, classify_entropy
 import collections
 
 # ~~ Generate Attribution Dataset ~~
@@ -250,10 +257,16 @@ for index, signal in enumerate(X):
     # print(signal.shape)
     signal = torch.sum(signal, dim=1).numpy()
     # print(np.max(signal))
-    df[index] = {'peaks':None, 'amplitude':None}
+    df[index] = {'peaks':None, 'amplitude':None, 'mean':None, 'stdev':None, "zero_crossing":None, "skewness":None, "kurtosis":None, "entropy":None}
     # print(classify_amplitude(signal,100))
-    df[index]['peaks'] = get_peaks(signal,2)
-    df[index]['amplitude'] = classify_amplitude(signal,100)
+    df[index]['peaks'] = get_peaks(signal,3)
+    df[index]['amplitude'] = classify_amplitude(signal,500)
+    df[index]['mean'] = classify_mean(signal,0.5)
+    df[index]['stdev'] = classify_stdev(signal,50)
+    df[index]['zero_crossing'] = classify_zero_crossing(signal,1)
+    df[index]["skewness"] = classify_skewness(signal)
+    df[index]["kurtosis"] = classify_kurtosis(signal)
+    df[index]["entropy"] = classify_entropy(signal)
     
 # df = pd.DataFrame(df)
 
@@ -264,6 +277,8 @@ attribution = Attribution()
 
 for layer in tqdm(range(1,len(layer_map))):
     for index, signal in tqdm(enumerate(layer_map[layer])):
+        if index > 30:
+            break
         for i, filter in enumerate(signal):
             for j, unit in enumerate(filter):
                 if unit.item() >= 0.9:
@@ -273,6 +288,6 @@ for layer in tqdm(range(1,len(layer_map))):
                     attribution.update_unit(layer,i*j+j, df[index])
                     
 # %%
-attribution.visualize_model(2)
+attribution.visualize_model(9)
 
 # %%
