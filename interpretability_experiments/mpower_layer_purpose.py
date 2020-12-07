@@ -4,17 +4,17 @@ import numpy as np
 from numpy.fft import rfft
 from numpy import argmax, mean, diff, log, nonzero
 from scipy.signal import blackmanharris, correlate, find_peaks
-from parabolic import parabolic
+# from parabolic import parabolic
 
 # %%
-def find_perodic(signal, threshold):
-    f, Pxx = signal.periodogram(signal, fs = 200, window='hanning', scaling='spectrum')
+def find_perodic(s, threshold):
+    f, Pxx = signal.periodogram(s, fs = 200, window='hanning', scaling='spectrum')
+    time = []
     for amp_arg in np.argsort(np.abs(Pxx))[::-1][1:20]:
-        time = 1 / f[amp_arg]
-        if time > threshold:
-            return True
-        
-    return False
+        time.append(1 / f[amp_arg])
+    
+    return sum(time)/len(time)
+
 
 # %%
 
@@ -35,14 +35,14 @@ def classify_frequency(signal, fs, threshold):
 
 # %%
 def get_peaks(signal, threshold):
-    peaks, _ = find_peaks(signal, distance=150)
-    return len(peaks) > 4
+    peaks, _ = find_peaks(signal)
+    return len(peaks) > threshold
 
 # %%
 def __z_score(signal):
     mean_int = np.mean(signal)
     std_int = np.std(signal)
-    z_scores = (signal — mean_int) / std_int
+    z_scores = (signal - mean_int) / std_int
     return z_scores
     
 # %%
@@ -55,21 +55,50 @@ def classify_amplitude(signal, threshold):
     return np.max(signal) > threshold
 
 # %%
-def classify_power(signal, threshold):
-    pass
+def classify_mean(signal, threshold):
+    print(np.average(signal,axis=0))
+    return np.average(signal,axis=0) > threshold
+
 
 # %%
-def classify_energy(signal, threshold):
-    pass
+def classify_stdev(signal, threshold):
+    return np.std(signal,axis=0) > threshold
+
 
 # %%
-def classify_ramp(signal, threshold):
-    pass
+def classify_zero_crossing(signal, threshold):
+    return np.nonzero(np.diff(signal > 0))[0].size > threshold
 
 # %%
-def classify_step(signal, threshold):
-    pass
+from scipy.stats import skew 
+
+def classify_skewness(signal):
+    return skew(signal) > 0
 
 # %%
-def classify_pulse(signal, threshold):
-    pass
+from scipy.stats import kurtosis
+
+def classify_kurtosis(signal):
+    return kurtosis(signal) < 0
+
+# %%
+from scipy.signal.spectral import periodogram, welch
+
+def spectral_entropy(x, sf, method='fft', nperseg=None, normalize=False):
+    x = np.array(x)
+    # Compute and normalize power spectrum
+    if method == 'fft':
+        _, psd = periodogram(x, sf)
+    elif method == 'welch':
+        _, psd = welch(x, sf, nperseg=nperseg)
+    psd_norm = np.divide(psd, psd.sum())
+    se = -np.multiply(psd_norm, np.log2(psd_norm)).sum()
+    if normalize:
+        se /= np.log2(psd_norm.size)
+    return se
+
+def classify_entropy(signal, threshold=0):
+    print(spectral_entropy(signal,200))
+    return spectral_entropy(signal,200) > threshold
+
+# %%
