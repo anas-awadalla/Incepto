@@ -6,7 +6,11 @@ import numpy as np
 import torch
 from sklearn.decomposition import PCA
 from torch.utils.data import DataLoader
-
+from captum.attr import GuidedBackprop
+from misc_functions import (get_example_params,
+                            convert_to_grayscale,
+                            save_gradient_images,
+                            get_positive_negative_saliency)
 
 class IllegalDataDimensionException(Exception):
     pass
@@ -32,9 +36,11 @@ class SignalInterpreter(object):
             gpu:
             channel_labels:
         """
-        data_loader = DataLoader(dataset, batch_size=len(dataset))
-        itr = iter(data_loader)
-        self.X, self.y = next(itr)
+        # data_loader = DataLoader(dataset, batch_size=len(dataset))
+        # itr = iter(data_loader)
+        self.X, self.y = X, y
+        
+        self.algo = GuidedBackprop(model)
         
         
         self.model = model.eval()
@@ -113,7 +119,18 @@ class SignalInterpreter(object):
         reduced_signal = self.pca.transform(output.detach())
         example_index = self.__closest_point(reduced_signal)
         example_signal = self.X[example_index]
-        return self.__plot_signals([signal, example_signal], int(torch.round(torch.sigmoid(self.model(signal.unsqueeze(0).to(self.device)))).item()), self.y[example_index].item(), self.channel_labels)
+        
+        signal_attribution = self.algo.attribute(signal.unsqueeze(0), target=0).detach().cpu().numpy()[0]
+        example_signal_attribution = self.algo.attribute(example_signal.unsqueeze(0), target=0).detach().cpu().numpy()[0]
+        
+        signal_attribution = convert_to_grayscale(signal_attribution* signal.detach().numpy())
+        example_signal_attribution = convert_to_grayscale(example_signal_attribution* example_signal.detach().numpy())
+        
+        # save_gradient_images(grayscale_guided_grads, result_dir + '_Guided_BP_gray')
+        
+        return self.__plot_signals([signal, example_signal], [signal_attribution, example_signal_attribution]
+                                   , int(torch.round(torch.sigmoid(self.model(signal.unsqueeze(0).to(self.device)))).item())
+                                   , self.y[example_index].item(), self.channel_labels)
 
     def __closest_point(self, point):
         """
@@ -130,7 +147,7 @@ class SignalInterpreter(object):
         dist_2 = np.einsum('ij,ij->i', deltas, deltas)
         return np.argmin(dist_2)
 
-    def __plot_signals(self, signals, output_test, output_training, channel_labels):
+    def __plot_signals(self, signals, attribution, output_test, output_training, channel_labels):
         """
 
         Args:
@@ -149,9 +166,11 @@ class SignalInterpreter(object):
 
         color_index = 0
         ax.set_title("Interpreted Signal with Output Class "+str(output_test))
-        for channel, label in zip(signals[0], channel_labels):
-            ax.plot(channel, color=colors[color_index + 20], label=label)
-            color_index += 1
+        # for channel, label in zip(signals[0], channel_labels):
+        ax.plot(sum(signals[0]))
+        ax.plot(sum(attribution[0].detach().numpy()))
+        
+            # color_index += 1
             
         plt.legend()
 
@@ -160,9 +179,11 @@ class SignalInterpreter(object):
 
         color_index = 0
         ax.set_title("Example Signal with Output Class "+str(output_training))
-        for channel, label in zip(signals[1], channel_labels):
-            ax.plot(channel, color=colors[color_index + 20], label=label)
-            color_index += 1
+        # for channel, label in zip(signals[1], channel_labels):
+        #     ax.plot(channel, color=colors[color_index + 20], label=label)
+        #     color_index += 1
+        ax.plot(sum(signals[1].detach().numpy()))
+        ax.plot(sum(attribution[1].detach().numpy()))
 
         plt.legend()
         plt.show()

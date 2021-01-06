@@ -22,7 +22,7 @@ class DetectorBase(ABC):
         pass
 
     @abstractmethod
-    def detect_distribution(self):
+    def detect_distribution(self, input):
         """
 
         """
