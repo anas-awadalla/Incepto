@@ -9,16 +9,16 @@ import data_loader
 import numpy as np
 import calculate_log as callog
 # import models
-from models.densenet121 import DenseNet121
+# from models.densenet121 import DenseNet121
 import os
 import lib_generation
-from models.parkinsonsNet import Network
+# from models.parkinsonsNet import Network
 
 from torchvision import transforms
 from torch.autograd import Variable
 from torch.utils.data.sampler import SubsetRandomSampler
 
-def extract_features(pre_trained_net, in_distribution, in_dist_name, out_dist_list, out_of_distribution, in_transform, gpu, batch_size, num_classes):
+def extract_features(model, in_distribution, in_dist_name, out_dist_list, out_of_distribution, in_transform, gpu, batch_size, num_classes):
     # set the path to pre-trained model and output
     outf = "/output/"
     outf = outf + "model" + '_' + in_dist_name + '/'
@@ -29,7 +29,7 @@ def extract_features(pre_trained_net, in_distribution, in_dist_name, out_dist_li
     torch.cuda.set_device(gpu)
     
     # load networks
-    model= torch.load(pre_trained_net, map_location = "cuda:" + str(gpu))
+    # model= torch.load(pre_trained_net, map_location = "cuda:" + str(gpu))
 
     model.cuda()
     print('loaded model')
