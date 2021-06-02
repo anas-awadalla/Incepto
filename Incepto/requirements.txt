@@ -134,7 +134,7 @@ tqdm==4.48.0
 traitlets==4.3.3
 typing-extensions==3.7.4.2
 tzlocal==2.1
-urllib3==1.25.10
+urllib3==1.26.5
 utils==1.0.1
 validators==0.17.1
 watchdog==0.10.3
